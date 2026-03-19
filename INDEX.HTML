@@ -14,7 +14,7 @@
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- Firebase SDKs -->
+    <!-- Firebase SDKs (Compat - Most stable for single file) -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -38,7 +38,7 @@
     <script type="text/babel">
         const { useState, useEffect, useRef, memo, useCallback, useMemo } = React;
 
-        // --- 1. Icons Definition (Fixed missing icons that caused crash) ---
+        // --- 1. Icons Definition ---
         const Icons = {
             Settings: (p) => <svg {...p} width={p.size || 24} height={p.size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.09a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>,
             LogOut: (p) => <svg {...p} width={p.size || 24} height={p.size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>,
@@ -79,7 +79,7 @@
         const AuthView = memo(({ formData, setFormData, handleAuth, loading, error, clientsList, siteSettings }) => {
             const identifiedClient = useMemo(() => {
                 const p = formData.phone.trim();
-                return p.length >= 9 ? clientsList.find(c => c.phone === p) : null;
+                return p.length >= 9 ? (clientsList || []).find(c => c.phone === p) : null;
             }, [formData.phone, clientsList]);
 
             useEffect(() => {
@@ -95,17 +95,16 @@
                     {identifiedClient && (
                         <div className="mb-6 p-4 bg-green-50 border border-green-100 rounded-2xl w-full text-center animate-fade-in">
                             <p className="text-green-800 font-bold">היי {identifiedClient.firstName}! ✨</p>
-                            <p className="text-green-600 text-xs mt-1">המערכת זיהתה אותך, מוכנה להיכנס?</p>
                         </div>
                     )}
                     <form onSubmit={handleAuth} className="space-y-6 w-full text-right">
                         <input required type="text" placeholder="מספר טלפון" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} className="w-full p-5 bg-stone-50 border border-stone-100 rounded-2xl font-bold text-center text-stone-800 focus:ring-2 focus:ring-[#B76E79] outline-none text-lg" dir="ltr" />
                         <div className="grid grid-cols-2 gap-4">
-                            <input required placeholder="שם פרטי" value={formData.firstName} onChange={e => setFormData({...formData, firstName: e.target.value})} className="p-4 bg-stone-50 border rounded-2xl font-bold text-stone-800 text-right" />
-                            <input required placeholder="שם משפחה" value={formData.lastName} onChange={e => setFormData({...formData, lastName: e.target.value})} className="p-4 bg-stone-50 border rounded-2xl font-bold text-stone-800 text-right" />
+                            <input required placeholder="שם פרטי" value={formData.firstName} onChange={e => setFormData({...formData, firstName: e.target.value})} className="p-4 bg-stone-50 border rounded-2xl font-bold text-stone-800 text-right focus:ring-2 focus:ring-[#B76E79] outline-none" />
+                            <input required placeholder="שם משפחה" value={formData.lastName} onChange={e => setFormData({...formData, lastName: e.target.value})} className="p-4 bg-stone-50 border rounded-2xl font-bold text-stone-800 text-right focus:ring-2 focus:ring-[#B76E79] outline-none" />
                         </div>
-                        {error && <p className="text-red-400 text-xs text-center font-bold">{error}</p>}
-                        <button type="submit" disabled={loading} className="w-full bg-stone-900 text-white p-5 rounded-3xl font-bold tracking-widest uppercase shadow-xl hover:bg-stone-800 active:scale-95 transition-all flex items-center justify-center gap-2">
+                        {error && <p className="text-red-400 text-xs text-center font-bold bg-red-50 p-3 rounded-xl border border-red-100">{error}</p>}
+                        <button type="submit" disabled={loading} className="w-full bg-stone-900 text-white p-5 rounded-3xl font-bold tracking-widest uppercase shadow-xl hover:bg-stone-800 active:scale-95 transition-all flex items-center justify-center gap-3">
                             {loading ? <Icons.RefreshCcw className="animate-spin" /> : <Icons.LogIn />} כניסה
                         </button>
                     </form>
@@ -131,67 +130,43 @@
                 await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('available_slots').doc(id).delete();
             };
 
-            const exportCSV = () => {
-                const headers = "Name,Phone,Service,Date,Time\n";
-                const rows = appointments.map(a => `${a.clientName},${a.clientPhone},${a.service1},${a.date},${a.time}`).join("\n");
-                const blob = new Blob([headers + rows], { type: 'text/csv;charset=utf-8;' });
-                const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = `LiNails_Report.csv`; link.click();
-            };
-
             return (
                 <div className="space-y-8 animate-fade-in pb-24 text-right" dir="rtl">
-                    <div className="bg-white p-8 rounded-[40px] shadow-sm border border-stone-100 text-right">
+                    <div className="bg-white p-8 rounded-[40px] shadow-sm border border-stone-100">
                         <h3 className="text-xl font-serif italic text-stone-800 mb-6 flex items-center gap-2">
                             <Icons.Plus className="text-[#B76E79]" /> הוספת שעה פנויה ליומן
                         </h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <label className="text-xs font-bold text-stone-400">תאריך</label>
-                                <input type="date" className="w-full p-4 bg-stone-50 border rounded-2xl font-bold" value={newSlot.date} onChange={e => setNewSlot({...newSlot, date: e.target.value})} />
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-xs font-bold text-stone-400">שעה</label>
-                                <input type="time" className="w-full p-4 bg-stone-50 border rounded-2xl font-bold" value={newSlot.time} onChange={e => setNewSlot({...newSlot, time: e.target.value})} />
-                            </div>
+                            <input type="date" className="w-full p-4 bg-stone-50 border rounded-2xl font-bold" value={newSlot.date} onChange={e => setNewSlot({...newSlot, date: e.target.value})} />
+                            <input type="time" className="w-full p-4 bg-stone-50 border rounded-2xl font-bold" value={newSlot.time} onChange={e => setNewSlot({...newSlot, time: e.target.value})} />
                         </div>
-                        <button onClick={addSlot} className="w-full bg-[#B76E79] text-white p-4 rounded-3xl font-black mt-6 shadow-lg hover:bg-stone-900 transition-colors">הוספה ליומן</button>
+                        <button onClick={addSlot} className="w-full bg-[#B76E79] text-white p-4 rounded-3xl font-black mt-6 shadow-lg hover:bg-stone-900">הוספה ליומן</button>
                     </div>
 
-                    <div className="bg-white p-8 rounded-[40px] shadow-sm border border-stone-100 text-right">
+                    <div className="bg-white p-8 rounded-[40px] shadow-sm border border-stone-100">
                         <h3 className="text-xl font-serif italic text-stone-800 mb-6 flex items-center gap-2">
-                            <Icons.Clock className="text-[#B76E79]" /> שעות פנויות כרגע ({availableSlots.length})
+                            <Icons.Clock className="text-[#B76E79]" /> שעות פנויות כרגע ({availableSlots?.length || 0})
                         </h3>
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                            {availableSlots.sort((a,b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time)).map(slot => (
-                                <div key={slot.id} className="p-4 bg-stone-50 rounded-2xl border flex justify-between items-center group">
-                                    <div className="text-right">
-                                        <p className="font-bold text-sm">{slot.date}</p>
-                                        <p className="text-[#B76E79] font-black">{slot.time}</p>
-                                    </div>
-                                    <button onClick={() => deleteSlot(slot.id)} className="text-stone-300 hover:text-red-500 transition-colors">
-                                        <Icons.Trash2 size={16} />
-                                    </button>
+                            {(availableSlots || []).sort((a,b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time)).map(slot => (
+                                <div key={slot.id} className="p-4 bg-stone-50 rounded-2xl border flex justify-between items-center">
+                                    <div className="text-right"><p className="font-bold text-sm">{slot.date}</p><p className="text-[#B76E79] font-black">{slot.time}</p></div>
+                                    <button onClick={() => deleteSlot(slot.id)} className="text-stone-300 hover:text-red-500"><Icons.Trash2 size={16} /></button>
                                 </div>
                             ))}
                         </div>
-                        {availableSlots.length === 0 && <p className="text-stone-400 text-center italic py-4">אין שעות פנויות כרגע ביומן.</p>}
                     </div>
-
+                    
                     <div className="bg-white p-8 rounded-[40px] shadow-sm border space-y-6">
-                        <div className="flex justify-between items-center border-b pb-4">
-                            <h3 className="text-xl font-serif italic text-stone-800">תורים שנקבעו ({appointments.length})</h3>
-                            <button onClick={exportCSV} className="bg-green-600 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-md flex items-center gap-2"><Icons.Download size={14} /> ייצוא</button>
-                        </div>
-                        <div className="space-y-4">
-                            {appointments.map((a) => (
-                                <div key={a.id} className="p-5 bg-stone-50 rounded-3xl border relative animate-fade-in">
-                                    <p className="font-bold text-lg text-stone-800 text-right">{a.clientName} <span className="text-xs opacity-40 font-normal">({a.clientPhone})</span></p>
-                                    <p className="text-[#B76E79] font-black text-sm mb-2 text-right">{a.date} | {a.time}</p>
-                                    <div className="p-3 bg-white rounded-xl text-xs border border-stone-100 text-right">טיפול: {a.service1}</div>
-                                    <button onClick={async () => confirm('למחוק?') && db.collection('artifacts').doc(appId).collection('public').doc('data').collection('appointments').doc(a.id).delete()} className="absolute top-4 left-4 p-2 text-stone-300 hover:text-red-500"><Icons.Trash2 size={16}/></button>
-                                </div>
-                            ))}
-                        </div>
+                        <h3 className="text-xl font-serif italic text-stone-800 border-b pb-4">תורים שנקבעו ({appointments?.length || 0})</h3>
+                        {appointments.map((a) => (
+                            <div key={a.id} className="p-5 bg-stone-50 rounded-3xl border relative animate-fade-in">
+                                <p className="font-bold text-lg text-stone-800">{a.clientName} <span className="text-xs opacity-40 font-normal">({a.clientPhone})</span></p>
+                                <p className="text-[#B76E79] font-black text-sm mb-2">{a.date} | {a.time}</p>
+                                <div className="p-3 bg-white rounded-xl text-xs border border-stone-100">טיפול: {a.service1}</div>
+                                <button onClick={async () => confirm('למחוק?') && db.collection('artifacts').doc(appId).collection('public').doc('data').collection('appointments').doc(a.id).delete()} className="absolute top-4 left-4 p-2 text-stone-300 hover:text-red-500"><Icons.Trash2 size={16}/></button>
+                            </div>
+                        ))}
                     </div>
                 </div>
             );
@@ -210,21 +185,31 @@
             const [clients, setClients] = useState([]);
             const [appointments, setAppointments] = useState([]);
             const [availableSlots, setAvailableSlots] = useState([]);
+            
             const [siteSettings, setSiteSettings] = useState({ 
                 studioName: 'LiNails', address: 'נחליאלי 21, כפר סבא',
-                services: [{ id: '1', name: 'מניקור ג׳ל', price: 120 }, { id: '2', name: 'בנייה בציפורן', price: 250 }],
-                social: { instagram: { enabled: true, url: 'https://www.instagram.com/linails111?igshid=YmMyMTA2M2Y%3D' }, whatsapp: { enabled: true, url: '972545912382' } }
+                services: [{ id: '1', name: 'מניקור ג׳ל', price: 120 }, { id: '2', name: 'בנייה בציפורן', price: 250 }]
             });
 
-            const [formData, setFormData] = useState({ firstName: '', lastName: '', phone: '', service1: '', date: '', time: '', isEmergency: false });
+            const [formData, setFormData] = useState({ firstName: '', lastName: '', phone: '', service1: '', date: '', time: '' });
             const [step, setStep] = useState(1);
 
             const appId = typeof __app_id !== 'undefined' ? __app_id : 'linails-portal-production';
 
+            // --- Robust Startup & Auth ---
             useEffect(() => {
-                const start = async () => {
-                    const fbConf = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : { apiKey: "", authDomain: "", projectId: "", storageBucket: "", messagingSenderId: "", appId: "" };
-                    if (!firebase.apps.length) firebase.initializeApp(fbConf);
+                const init = async () => {
+                    const fbConf = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : { apiKey: "" };
+                    
+                    // Safety check for Firebase libraries
+                    if (typeof firebase === 'undefined') {
+                        setTimeout(init, 500);
+                        return;
+                    }
+
+                    if (!firebase.apps.length && fbConf.apiKey) {
+                        firebase.initializeApp(fbConf);
+                    }
 
                     const auth = firebase.auth();
                     try {
@@ -240,9 +225,10 @@
                         setIsReady(true);
                     }
                 };
-                start();
+                init();
             }, []);
 
+            // --- Data Listeners ---
             useEffect(() => {
                 if (!user || !isReady) return;
                 
@@ -273,12 +259,6 @@
                     setLoading(false); 
                     return; 
                 }
-                if (!phone || !formData.firstName || !formData.lastName) { 
-                    setError('נא למלא פרטים'); 
-                    setLoading(false); 
-                    return; 
-                }
-                
                 const data = { firstName: formData.firstName.trim(), lastName: formData.lastName.trim(), phone, updatedAt: new Date().toISOString() };
                 setProfile(data); setView('home');
                 firebase.firestore().collection('artifacts').doc(appId).collection('public').doc('data').collection('clients').doc(phone).set(data, { merge: true });
@@ -293,51 +273,44 @@
                 
                 // 1. Create Appointment
                 await db.collection('artifacts').doc(aid).collection('public').doc('data').collection('appointments').doc(`${Date.now()}`).set({ 
-                    ...formData, 
-                    clientPhone: profile?.phone, 
-                    clientName: `${profile?.firstName} ${profile?.lastName}`, 
-                    status: 'confirmed', 
-                    timestamp: new Date().toISOString() 
+                    ...formData, clientPhone: profile?.phone, clientName: `${profile?.firstName} ${profile?.lastName}`, status: 'confirmed', timestamp: new Date().toISOString() 
                 });
 
-                // 2. DELETE slot from management
+                // 2. DELETE slot from system (Rule: Remove from management)
                 await db.collection('artifacts').doc(aid).collection('public').doc('data').collection('available_slots').doc(slotId).delete();
             };
 
             const currentAvailableHours = useMemo(() => {
                 if (!formData.date) return [];
-                return availableSlots
-                    .filter(s => s.date === formData.date)
-                    .map(s => s.time)
-                    .sort();
+                return availableSlots.filter(s => s.date === formData.date).map(s => s.time).sort();
             }, [formData.date, availableSlots]);
 
-            if (!isReady) return <div className="min-h-screen bg-[#e7c3bf] flex items-center justify-center text-white font-serif font-black text-3xl italic animate-pulse text-center">LiNAILS</div>;
+            if (!isReady) return <div className="min-h-screen bg-[#e7c3bf] flex items-center justify-center text-white font-serif font-black text-3xl italic animate-pulse">LiNAILS</div>;
 
             return (
-                <div className="min-h-screen text-right selection:bg-black selection:text-white" dir="rtl">
+                <div className="min-h-screen text-right" dir="rtl">
                     <nav className="bg-white/90 backdrop-blur-xl sticky top-0 z-50 border-b px-6 py-4 flex justify-between items-center shadow-sm">
                         {profile && (
                             <div className="flex gap-3">
-                                {profile.isAdmin && <button onClick={() => setView(view === 'admin' ? 'home' : 'admin')} className="p-2 rounded-2xl border text-[#B76E79] hover:bg-stone-50 transition-all"><Icons.Settings size={20} /></button>}
+                                {profile.isAdmin && <button onClick={() => setView(view === 'admin' ? 'home' : 'admin')} className="p-2 rounded-2xl border text-[#B76E79] hover:bg-stone-50"><Icons.Settings size={20} /></button>}
                                 <button onClick={() => { setProfile(null); setView('auth'); }} className="text-stone-300 p-2 hover:text-stone-500 transition-all"><Icons.LogOut size={20} /></button>
                             </div>
                         )}
-                        <div className="flex items-center gap-3 cursor-pointer text-right" onClick={() => profile && setView('home')}>
+                        <div className="flex items-center gap-3 cursor-pointer" onClick={() => profile && setView('home')}>
                             <span className="text-2xl font-serif font-black text-stone-900 italic tracking-tighter">{siteSettings.studioName}</span>
                         </div>
                     </nav>
 
-                    <main className="max-w-xl mx-auto px-4 pt-12 text-right">
+                    <main className="max-w-xl mx-auto px-4 pt-12">
                         {view === 'auth' ? (
                             <AuthView formData={formData} setFormData={setFormData} handleAuth={handleAuth} loading={loading} error={error} siteSettings={siteSettings} clientsList={clients} />
                         ) : view === 'home' ? (
-                            <div className="space-y-10 animate-fade-in flex flex-col items-center text-center">
-                                <div className="bg-white p-12 rounded-[50px] shadow-2xl border space-y-8 flex flex-col items-center w-full text-center">
+                            <div className="space-y-10 animate-fade-in flex flex-col items-center">
+                                <div className="bg-white p-12 rounded-[50px] shadow-2xl border space-y-8 flex flex-col items-center w-full">
                                     <BrandLogo />
                                     <h1 className="text-5xl font-serif text-stone-800 italic">היי {profile?.firstName}</h1>
                                     <div className="flex items-center justify-center gap-2 text-stone-400 text-sm italic w-full text-center text-center"><Icons.MapPin size={14} /> {siteSettings.address}</div>
-                                    <button onClick={() => { setStep(1); setView('booking'); }} className="w-full bg-stone-900 text-white p-7 rounded-[35px] text-lg font-bold uppercase shadow-2xl flex items-center justify-center gap-4 group transition-all transform active:scale-95 text-center">קביעת תור חדש <Icons.ChevronRight size={24} /></button>
+                                    <button onClick={() => { setStep(1); setView('booking'); }} className="w-full bg-stone-900 text-white p-7 rounded-[35px] text-lg font-bold uppercase shadow-2xl transition-all active:scale-95">קביעת תור חדש <Icons.ChevronRight size={24} /></button>
                                 </div>
                             </div>
                         ) : view === 'admin' ? (
@@ -345,67 +318,63 @@
                         ) : (
                             <div className="bg-white rounded-[50px] shadow-2xl border p-8 text-right">
                                 {step < 5 && <div className="h-1.5 bg-stone-50 mb-8"><div className="bg-stone-900 h-full transition-all duration-700" style={{ width: `${(step/4)*100}%` }}></div></div>}
-                                <div className="p-8 text-right">
-                                    {step === 1 && (
-                                        <div className="space-y-10 flex flex-col items-center text-right w-full">
-                                            <h3 className="text-3xl font-serif italic text-stone-800 text-center">באיזה תור נתפנק?</h3>
-                                            <button onClick={() => { setFormData({...formData, isEmergency: false}); setStep(2); }} className="p-8 border rounded-[35px] w-full flex justify-between items-center hover:border-[#B76E79] transition-all text-right"><Icons.User /> תור רגיל <Icons.ChevronRight /></button>
-                                            <button onClick={() => { setFormData({...formData, isEmergency: true}); setStep(2); }} className="p-8 border-2 border-red-50 rounded-[35px] w-full flex justify-between items-center bg-red-50/20 text-red-700 text-right"><Icons.AlertCircle /> תור חירום <Icons.ChevronRight /></button>
+                                {step === 1 && (
+                                    <div className="space-y-10 flex flex-col items-center">
+                                        <h3 className="text-3xl font-serif italic text-stone-800 text-center">באיזה תור נתפנק?</h3>
+                                        <button onClick={() => setStep(2)} className="p-8 border rounded-[35px] w-full flex justify-between items-center hover:border-[#B76E79]">תור רגיל <Icons.ChevronRight /></button>
+                                        <button onClick={() => setStep(2)} className="p-8 border-2 border-red-50 bg-red-50/20 rounded-[35px] w-full flex justify-between items-center text-red-700">תור חירום <Icons.ChevronRight /></button>
+                                    </div>
+                                )}
+                                {step === 2 && (
+                                    <div className="space-y-6">
+                                        <h3 className="text-3xl font-serif italic text-center text-stone-800">מה עושים היום?</h3>
+                                        <select className="w-full p-6 bg-stone-50 border rounded-[30px] font-bold text-right" onChange={e => setFormData({...formData, service1: e.target.value})}>
+                                            <option value="">בחרי טיפול...</option>
+                                            {siteSettings.services.map(s => <option key={s.id} value={s.name}>{s.name} — ₪{s.price}</option>)}
+                                        </select>
+                                        <button disabled={!formData.service1} onClick={() => setStep(3)} className="w-full bg-stone-900 text-white p-6 rounded-3xl font-black shadow-xl">המשך</button>
+                                    </div>
+                                )}
+                                {step === 3 && (
+                                    <div className="space-y-6 text-center">
+                                        <h3 className="text-3xl font-serif italic text-center">כאן בוחרים תאריך ושעה</h3>
+                                        <input type="date" className="w-full p-4 border rounded-2xl font-bold text-center bg-stone-50" min={new Date().toISOString().split('T')[0]} value={formData.date} onChange={e => setFormData({...formData, date: e.target.value})} />
+                                        <div className="grid grid-cols-3 gap-3 pt-4 text-center">
+                                            {currentAvailableHours.map(t => (
+                                                <button key={t} onClick={() => setFormData({...formData, time: t})} className={`p-4 rounded-2xl font-bold text-xs border-2 transition-all ${formData.time === t ? 'bg-stone-900 border-stone-900 text-white shadow-lg' : 'bg-white text-stone-400'}`}>
+                                                    {t}
+                                                </button>
+                                            ))}
                                         </div>
-                                    )}
-                                    {step === 2 && (
-                                        <div className="space-y-6 text-right">
-                                            <h3 className="text-3xl font-serif italic text-center text-stone-800">מה עושים היום?</h3>
-                                            <select className="w-full p-6 bg-stone-50 border rounded-[30px] font-bold text-right text-stone-800" onChange={e => setFormData({...formData, service1: e.target.value})}>
-                                                <option value="">בחרי טיפול...</option>
-                                                {siteSettings.services.map(s => <option key={s.id} value={s.name}>{s.name} — ₪{s.price}</option>)}
-                                            </select>
-                                            <button disabled={!formData.service1} onClick={() => setStep(3)} className="w-full bg-stone-900 text-white p-6 rounded-3xl font-black shadow-xl text-center">המשך</button>
+                                        {formData.date && currentAvailableHours.length === 0 && <p className="text-red-400 text-xs italic py-4">אין שעות פנויות בתאריך זה.</p>}
+                                        <button disabled={!formData.date || !formData.time} onClick={() => setStep(4)} className="w-full bg-stone-900 text-white p-6 rounded-3xl font-black mt-6 shadow-lg">סיכום</button>
+                                    </div>
+                                )}
+                                {step === 4 && (
+                                    <div className="space-y-6 text-right">
+                                        <h3 className="text-3xl font-serif italic text-center">אישור סופי</h3>
+                                        <div className="bg-stone-50 p-8 rounded-[40px] border space-y-4 shadow-inner">
+                                            <p className="text-right">לקוחה: <b>{profile?.firstName} {profile?.lastName}</b></p>
+                                            <p className="text-right">טיפול: <b>{formData.service1}</b></p>
+                                            <p className="text-right">מועד: <b>{formData.date} | {formData.time}</b></p>
                                         </div>
-                                    )}
-                                    {step === 3 && (
-                                        <div className="space-y-6 text-center text-right">
-                                            <h3 className="text-3xl font-serif italic text-center text-right">כאן בוחרים תאריך ושעה</h3>
-                                            <input type="date" className="w-full p-4 border rounded-2xl font-bold text-center bg-stone-50" min={new Date().toISOString().split('T')[0]} value={formData.date} onChange={e => setFormData({...formData, date: e.target.value})} />
-                                            
-                                            <div className="grid grid-cols-3 gap-3 pt-4 text-center">
-                                                {currentAvailableHours.map(t => (
-                                                    <button key={t} onClick={() => setFormData({...formData, time: t})} className={`p-4 rounded-2xl font-bold text-xs border-2 transition-all ${formData.time === t ? 'bg-stone-900 border-stone-900 text-white shadow-lg' : 'bg-white text-stone-400'}`}>
-                                                        {t}
-                                                    </button>
-                                                ))}
-                                            </div>
-                                            {formData.date && currentAvailableHours.length === 0 && <p className="text-red-400 text-xs italic py-4">אין שעות פנויות להזמנה בתאריך זה.</p>}
-                                            
-                                            <button disabled={!formData.date || !formData.time} onClick={() => setStep(4)} className="w-full bg-stone-900 text-white p-6 rounded-3xl font-black mt-6 shadow-lg active:scale-95 transition-all text-center">סיכום</button>
-                                        </div>
-                                    )}
-                                    {step === 4 && (
-                                        <div className="space-y-6 text-right">
-                                            <h3 className="text-3xl font-serif italic text-center">אישור סופי</h3>
-                                            <div className="bg-stone-50 p-8 rounded-[40px] border space-y-4 shadow-inner text-right text-right">
-                                                <p className="text-right">לקוחה: <b>{profile?.firstName} {profile?.lastName}</b></p>
-                                                <p className="text-right">טיפול: <b>{formData.service1}</b> {formData.isEmergency ? '(תור חירום 🚨)' : ''}</p>
-                                                <p className="text-right">מועד: <b>{formData.date} | {formData.time}</b></p>
-                                            </div>
-                                            <button onClick={confirmBooking} className="w-full bg-stone-900 text-white p-6 rounded-3xl font-black shadow-2xl text-center active:scale-95 transition-all">אישור תור סופי ✨</button>
-                                        </div>
-                                    )}
-                                    {step === 5 && (
-                                        <div className="text-center py-12 space-y-12 animate-bounce-in flex flex-col items-center">
-                                            <Icons.CheckCircle size={80} className="text-green-500 text-center" />
-                                            <h2 className="text-4xl font-serif italic">התור אושר!</h2>
-                                            <button onClick={() => {
-                                                const text = encodeURIComponent(`היי לין קבעתי תור דרך האפליקציה ל${formData.service1} ב-${formData.date} בשעה ${formData.time}`);
-                                                window.open(`https://api.whatsapp.com/send?phone=972545912382&text=${text}`);
-                                            }} className="w-full flex items-center justify-between p-6 bg-stone-900 text-white rounded-[30px] font-bold shadow-2xl hover:bg-[#B76E79] transition-all text-right text-right">
-                                                <span className="flex items-center gap-4 text-xs tracking-widest uppercase text-right"><Icons.Whatsapp size={22} /> שתפי בווטצאפ</span>
-                                                <Icons.ChevronRight size={22} className="text-[#E5C1CD]" />
-                                            </button>
-                                            <button onClick={() => { setView('home'); setStep(1); }} className="text-stone-500 text-xs tracking-widest uppercase font-black hover:text-black mt-4 transition-all text-center">חזרה לבית</button>
-                                        </div>
-                                    )}
-                                </div>
+                                        <button onClick={confirmBooking} className="w-full bg-stone-900 text-white p-6 rounded-3xl font-black shadow-2xl active:scale-95 transition-all">אישור תור סופי ✨</button>
+                                    </div>
+                                )}
+                                {step === 5 && (
+                                    <div className="text-center py-12 space-y-12 animate-bounce-in flex flex-col items-center">
+                                        <Icons.CheckCircle size={80} className="text-green-500" />
+                                        <h2 className="text-4xl font-serif italic text-center">התור אושר!</h2>
+                                        <button onClick={() => {
+                                            const text = encodeURIComponent(`היי לין קבעתי תור ל${formData.service1} ב-${formData.date} בשעה ${formData.time}`);
+                                            window.open(`https://api.whatsapp.com/send?phone=972545912382&text=${text}`);
+                                        }} className="w-full flex items-center justify-between p-6 bg-stone-900 text-white rounded-[30px] font-bold shadow-2xl hover:bg-[#B76E79]">
+                                            <span className="flex items-center gap-4 text-xs tracking-widest uppercase"><Icons.Whatsapp size={22} /> שתפי בווטצאפ</span>
+                                            <Icons.ChevronRight size={22} className="text-[#E5C1CD]" />
+                                        </button>
+                                        <button onClick={() => { setView('home'); setStep(1); }} className="text-stone-500 text-xs tracking-widest uppercase font-black hover:text-black mt-4 transition-all">חזרה לבית</button>
+                                    </div>
+                                )}
                             </div>
                         )}
                     </main>
@@ -415,7 +384,7 @@
                             <Icons.Instagram size={24} className="hover:text-black cursor-pointer transition-all text-center" />
                             <Icons.Whatsapp size={24} className="hover:text-black cursor-pointer transition-all text-right" onClick={() => window.open(`https://wa.me/972545912382`)} />
                         </div>
-                        <div className="space-y-4 w-full text-center">
+                        <div className="space-y-4 w-full text-center text-center">
                             <p className="text-stone-600 text-[10px] font-black tracking-[0.5em] uppercase w-full text-center">{siteSettings.studioName.toUpperCase()} STUDIO</p>
                             <p className="text-stone-500 text-[8px] uppercase tracking-widest italic text-center">{siteSettings.address}</p>
                             <a href="#" className="text-stone-800 text-[11px] font-bold block mt-6 hover:text-black transition-all transform hover:scale-105 underline decoration-[#E5C1CD] w-full text-center">נוצר באמצעות אור לוינסון בניית אפליקציות</a>
