@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="google-site-verification" content="K9rQoCm-aX2H4vhWJ9GRdoDbtSeDXejBt3hCHWxfUgk" />
     
     <title>LiNails - פורטל ניהול וקביעת תורים</title>
     
@@ -39,40 +38,25 @@
     <script type="text/babel">
         const { useState, useEffect, useRef, memo, useCallback, useMemo } = React;
 
-        // --- Configuration Handlers ---
-        const getFirebaseConfig = () => {
-            try {
-                if (typeof __firebase_config !== 'undefined') {
-                    return typeof __firebase_config === 'string' ? JSON.parse(__firebase_config) : __firebase_config;
-                }
-            } catch(e) {}
-            return { apiKey: "YOUR_API_KEY", authDomain: "YOUR_DOMAIN", projectId: "YOUR_PROJECT", storageBucket: "YOUR_BUCKET", messagingSenderId: "...", appId: "..." };
-        };
-
-        const getAppId = () => typeof __app_id !== 'undefined' ? __app_id : 'linails-portal-production';
-        const getGeminiKey = () => ""; // Provided at runtime
-
-        // --- Icons ---
+        // --- 1. Global Definitions (Icons) ---
         const Icons = {
-            Sparkles: (p) => <svg {...p} width={p.size || 24} height={p.size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/><path d="M5 3v4"/><path d="M19 17v4"/><path d="M3 5h4"/><path d="M17 19h4"/></svg>,
             Settings: (p) => <svg {...p} width={p.size || 24} height={p.size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.09a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>,
             LogOut: (p) => <svg {...p} width={p.size || 24} height={p.size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>,
             ChevronRight: (p) => <svg {...p} width={p.size || 24} height={p.size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>,
             Trash2: (p) => <svg {...p} width={p.size || 24} height={p.size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x1="14" y1="11" y2="17"/></svg>,
-            Download: (p) => <svg {...p} width={p.size || 24} height={p.size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>,
-            Instagram: (p) => <svg {...p} width={p.size || 24} height={p.size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>,
             Whatsapp: (p) => <svg {...p} width={p.size || 24} height={p.size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>,
-            RefreshCcw: (p) => <svg {...p} width={p.size || 24} height={p.size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>,
-            MapPin: (p) => <svg {...p} width={p.size || 24} height={p.size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>,
-            LogIn: (p) => <svg {...p} width={p.size || 24} height={p.size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>,
-            User: (p) => <svg {...p} width={p.size || 24} height={p.size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>,
             CheckCircle: (p) => <svg {...p} width={p.size || 24} height={p.size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>,
-            MessageSquare: (p) => <svg {...p} width={p.size || 24} height={p.size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>,
-            AlertCircle: (p) => <svg {...p} width={p.size || 24} height={p.size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            MapPin: (p) => <svg {...p} width={p.size || 24} height={p.size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>,
+            User: (p) => <svg {...p} width={p.size || 24} height={p.size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>,
+            AlertCircle: (p) => <svg {...p} width={p.size || 24} height={p.size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>,
+            Download: (p) => <svg {...p} width={p.size || 24} height={p.size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>,
+            RefreshCcw: (p) => <svg {...p} width={p.size || 24} height={p.size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>,
+            LogIn: (p) => <svg {...p} width={p.size || 24} height={p.size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>,
+            Instagram: (p) => <svg {...p} width={p.size || 24} height={p.size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
         };
 
-        const BrandLogo = ({ className }) => (
-            <div className={`${className} bg-white rounded-full flex items-center justify-center p-2 shadow-xl border border-white relative overflow-hidden`}>
+        const BrandLogo = () => (
+            <div className="w-32 h-32 bg-white rounded-full flex items-center justify-center p-2 shadow-xl border border-white relative overflow-hidden">
                 <svg viewBox="0 0 200 200" className="w-full h-full">
                     <defs>
                         <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -83,272 +67,249 @@
                     <path d="M70 130 Q70 170 100 170 Q130 170 130 130 L130 90 L70 90 Z" fill="#B76E79" />
                     <rect x="90" y="30" width="20" height="60" rx="4" fill="#1a1a1a" />
                     <path d="M150 40 L154 50 L164 50 L156 57 L159 67 L150 60 L141 67 L144 57 L136 50 L146 50 Z" fill="url(#goldGrad)" className="animate-pulse" />
-                    <circle cx="40" cy="50" r="4" fill="#D4AF37" opacity="0.6" />
-                    <circle cx="160" cy="110" r="3" fill="#D4AF37" opacity="0.8" />
                     <text x="100" y="192" fontFamily="Playfair Display" fontSize="34" fontWeight="900" textAnchor="middle" fill="#1a1a1a">LiNails</text>
                 </svg>
             </div>
         );
 
-        // --- 3. Gemini API Wrapper ---
-        const callGemini = async (prompt, system) => {
-            const key = getGeminiKey();
-            if (!key) return "מפתח AI לא מוגדר.";
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${key}`;
-            try {
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{ parts: [{ text: prompt }] }],
-                        systemInstruction: { parts: [{ text: system }] }
-                    })
-                });
-                const res = await response.json();
-                return res.candidates?.[0]?.content?.parts?.[0]?.text || "לא התקבלה תשובה.";
-            } catch (e) { return "שגיאה בחיבור ל-AI."; }
-        };
+        // --- 2. Sub-Components (Defined BEFORE App) ---
 
-        // --- 4. Sub-Components ---
+        const AuthView = memo(({ formData, setFormData, handleAuth, loading, error, clientsList, siteSettings }) => {
+            const identifiedClient = useMemo(() => {
+                const p = formData.phone.trim();
+                return p.length >= 9 ? clientsList.find(c => c.phone === p) : null;
+            }, [formData.phone, clientsList]);
 
-        const AIServiceChat = ({ studioName }) => {
-            const [query, setQuery] = useState("");
-            const [response, setResponse] = useState("");
-            const [loading, setLoading] = useState(false);
+            useEffect(() => {
+                if (identifiedClient) {
+                    setFormData(prev => ({...prev, firstName: identifiedClient.firstName, lastName: identifiedClient.lastName}));
+                }
+            }, [identifiedClient, setFormData]);
 
-            const handleAsk = async () => {
-                if (!query) return;
-                setLoading(true);
-                const res = await callGemini(query, `You are an AI beauty advisor for ${studioName}. Suggest colors and trends in Hebrew.`);
-                setResponse(res);
-                setLoading(false);
+            return (
+                <div className="max-w-md mx-auto bg-white p-10 rounded-[40px] shadow-2xl border border-white animate-fade-in flex flex-col items-center">
+                    <BrandLogo />
+                    <h2 className="text-4xl font-serif font-black text-stone-900 italic text-center mb-8 mt-6">LiNAILS</h2>
+                    {identifiedClient && (
+                        <div className="mb-6 p-4 bg-green-50 border border-green-100 rounded-2xl w-full text-center animate-fade-in">
+                            <p className="text-green-800 font-bold">היי {identifiedClient.firstName}! ✨</p>
+                            <p className="text-green-600 text-xs mt-1">המערכת זיהתה אותך, מוכנה להיכנס?</p>
+                        </div>
+                    )}
+                    <form onSubmit={handleAuth} className="space-y-6 w-full text-right">
+                        <input required type="text" placeholder="מספר טלפון" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} className="w-full p-5 bg-stone-50 border border-stone-100 rounded-2xl font-bold text-center text-stone-800 focus:ring-2 focus:ring-[#B76E79] outline-none text-lg" dir="ltr" />
+                        <div className="grid grid-cols-2 gap-4">
+                            <input required placeholder="שם פרטי" value={formData.firstName} onChange={e => setFormData({...formData, firstName: e.target.value})} className="p-4 bg-stone-50 border rounded-2xl font-bold text-stone-800 text-right" />
+                            <input required placeholder="שם משפחה" value={formData.lastName} onChange={e => setFormData({...formData, lastName: e.target.value})} className="p-4 bg-stone-50 border rounded-2xl font-bold text-stone-800 text-right" />
+                        </div>
+                        {error && <p className="text-red-400 text-xs text-center font-bold">{error}</p>}
+                        <button type="submit" disabled={loading} className="w-full bg-stone-900 text-white p-5 rounded-3xl font-bold tracking-widest uppercase shadow-xl hover:bg-stone-800 active:scale-95 transition-all flex items-center justify-center gap-2">
+                            {loading ? <Icons.RefreshCcw className="animate-spin" /> : <Icons.LogIn />} כניסה
+                        </button>
+                    </form>
+                </div>
+            );
+        });
+
+        const AdminDashboard = memo(({ appointments, clientsList, db, appId }) => {
+            const exportCSV = () => {
+                const headers = "Name,Phone,Service,Date,Time\n";
+                const rows = appointments.map(a => `${a.clientName},${a.clientPhone},${a.service1},${a.date},${a.time}`).join("\n");
+                const blob = new Blob([headers + rows], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = `LiNails_Report.csv`; link.click();
             };
 
             return (
-                <div className="bg-stone-50 p-6 rounded-[35px] border border-stone-100 shadow-inner space-y-4 w-full text-right mt-6 animate-fade-in">
-                    <div className="flex items-center gap-2 mb-2 text-[#B76E79]">
-                        <Icons.Sparkles size={18} />
-                        <h3 className="font-bold text-sm">ייעוץ סטייל AI ✨</h3>
+                <div className="space-y-8 animate-fade-in pb-24 text-right" dir="rtl">
+                    <div className="bg-white p-8 rounded-[40px] shadow-sm border space-y-6">
+                        <div className="flex justify-between items-center border-b pb-4">
+                            <h3 className="text-xl font-serif italic text-stone-800">יומן תורים ({appointments.length})</h3>
+                            <button onClick={exportCSV} className="bg-green-600 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-md flex items-center gap-2"><Icons.Download size={14} /> ייצוא</button>
+                        </div>
+                        <div className="space-y-4">
+                            {appointments.map((a) => (
+                                <div key={a.id} className="p-5 bg-stone-50 rounded-3xl border relative animate-fade-in">
+                                    <p className="font-bold text-lg text-stone-800 text-right">{a.clientName} <span className="text-xs opacity-40 font-normal">({a.clientPhone})</span></p>
+                                    <p className="text-[#B76E79] font-black text-sm mb-2 text-right">{a.date} | {a.time}</p>
+                                    <div className="p-3 bg-white rounded-xl text-xs border border-stone-100 text-right">טיפול: {a.service1}</div>
+                                    <button onClick={async () => confirm('למחוק?') && db.collection('artifacts').doc(appId).collection('public').doc('data').collection('appointments').doc(a.id).delete()} className="absolute top-4 left-4 p-2 text-stone-300 hover:text-red-500"><Icons.Trash2 size={16}/></button>
+                                </div>
+                            ))}
+                        </div>
                     </div>
-                    <textarea value={query} onChange={e => setQuery(e.target.value)} placeholder="איזה צבע יתאים לשמלה שחורה?" className="w-full p-4 bg-white border border-stone-200 rounded-2xl text-sm text-right h-24 focus:ring-2 focus:ring-[#B76E79] outline-none" />
-                    <button onClick={handleAsk} disabled={loading || !query} className="w-full bg-[#B76E79] text-white p-3 rounded-2xl font-bold text-xs flex items-center justify-center gap-2 hover:opacity-90 transition-all">
-                        {loading ? <Icons.RefreshCcw className="animate-spin" size={16} /> : <Icons.MessageSquare size={16} />} שאלי את ה-AI
-                    </button>
-                    {response && <div className="p-4 bg-white rounded-2xl border border-[#B76E79]/20 text-xs text-stone-700 text-right animate-fade-in leading-relaxed">{response}</div>}
                 </div>
             );
-        };
+        });
 
-        const AIMarketing = ({ studioName }) => {
-            const [goal, setGoal] = useState("");
-            const [res, setRes] = useState("");
-            const [loading, setLoading] = useState(false);
-
-            const generate = async () => {
-                setLoading(true);
-                const msg = await callGemini(`צור תוכן שיווקי עבור: ${goal}`, "You are a luxury marketing expert for a nail studio. Hebrew only.");
-                setRes(msg);
-                setLoading(false);
-            };
-
-            return (
-                <div className="bg-stone-900 text-white p-6 rounded-[35px] shadow-2xl space-y-4 text-right mb-6 animate-fade-in">
-                    <h3 className="font-bold text-sm flex items-center gap-2 text-[#E5C1CD]"><Icons.Sparkles size={18}/> מחולל שיווק AI ✨</h3>
-                    <input value={goal} onChange={e => setGoal(e.target.value)} placeholder="מבצע פסח חדש..." className="w-full p-4 bg-white/10 border border-white/20 rounded-2xl text-sm text-right text-white outline-none" />
-                    <button onClick={generate} disabled={loading} className="w-full bg-[#E5C1CD] text-stone-900 p-3 rounded-2xl font-bold text-xs hover:bg-white transition-all">
-                        {loading ? "מייצר..." : "צור תוכן שיווקי"}
-                    </button>
-                    {res && <div className="p-4 bg-white/5 rounded-2xl text-xs text-white/80 animate-fade-in leading-relaxed">{res}</div>}
-                </div>
-            );
-        };
-
-        // --- 5. Main App ---
+        // --- 3. Main Application ---
 
         const App = () => {
-            const [initReady, setInitReady] = useState(false);
             const [user, setUser] = useState(null);
-            const [profile, setProfile] = useState(null);
+            const [isReady, setIsReady] = useState(false);
             const [view, setView] = useState('auth');
-            const [clients, setClients] = useState([]);
-            const [appointments, setAppointments] = useState([]);
+            const [profile, setProfile] = useState(null);
             const [loading, setLoading] = useState(false);
             const [error, setError] = useState(null);
             
-            const [siteSettings, setSiteSettings] = useState({
+            const [clients, setClients] = useState([]);
+            const [appointments, setAppointments] = useState([]);
+            const [siteSettings, setSiteSettings] = useState({ 
                 studioName: 'LiNails', address: 'נחליאלי 21, כפר סבא',
-                social: { instagram: { enabled: true, url: 'https://www.instagram.com/linails111?igshid=YmMyMTA2M2Y%3D' }, whatsapp: { enabled: true, url: '972553034061' } },
                 services: [{ id: '1', name: 'מניקור ג׳ל', price: 120 }, { id: '2', name: 'בנייה בציפורן', price: 250 }],
-                closedDates: []
+                social: { instagram: { enabled: true, url: 'https://www.instagram.com/linails111?igshid=YmMyMTA2M2Y%3D' }, whatsapp: { enabled: true, url: '972545912382' } }
             });
 
-            const [formData, setFormData] = useState({ firstName: '', lastName: '', phone: '', service1: '', date: '', time: '', isEmergency: false, emergencyReason: '' });
+            const [formData, setFormData] = useState({ firstName: '', lastName: '', phone: '', service1: '', date: '', time: '', isEmergency: false });
             const [step, setStep] = useState(1);
 
-            // 1. Initial Firebase & Auth Load
+            const fbAppId = typeof __app_id !== 'undefined' ? __app_id : 'linails-portal-production';
+
+            // --- 4. Initialization ---
             useEffect(() => {
                 const start = async () => {
+                    const fbConf = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : { apiKey: "", authDomain: "", projectId: "", storageBucket: "", messagingSenderId: "", appId: "" };
+                    
                     try {
-                        const conf = getFirebaseConfig();
-                        if (!firebase.apps.length) firebase.initializeApp(conf);
-                        
+                        // Ensure initializeApp is only called once and correctly
+                        if (!firebase.apps.length) {
+                            firebase.initializeApp(fbConf);
+                        }
+
                         const auth = firebase.auth();
-                        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                            await auth.signInWithCustomToken(__initial_auth_token);
+                        const token = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+                        
+                        if (token) {
+                            await auth.signInWithCustomToken(token);
                         } else {
                             await auth.signInAnonymously();
                         }
-                        
+
                         auth.onAuthStateChanged(u => {
                             setUser(u);
-                            setInitReady(true);
+                            setIsReady(true);
                         });
-                    } catch (e) {
-                        console.error("Critical start fail", e);
-                        setInitReady(true);
+                    } catch (e) { 
+                        console.warn("Auth bypass active"); 
+                        setIsReady(true); // Don't block screen on missing config
                     }
                 };
                 start();
             }, []);
 
-            // 2. Data Listeners (Only after user is set)
+            // --- 5. Data Listeners ---
             useEffect(() => {
-                if (!user) return;
+                if (!user || !isReady) return;
+                
                 const db = firebase.firestore();
-                const aid = getAppId();
+                const aid = fbAppId;
+                const publicRef = db.collection('artifacts').doc(aid).collection('public').doc('data');
 
-                const unsubSet = db.collection('artifacts').doc(aid).collection('public').doc('data').collection('settings').doc('global').onSnapshot(s => s.exists && setSiteSettings(p => ({...p, ...s.data()})));
-                const unsubCli = db.collection('artifacts').doc(aid).collection('public').doc('data').collection('clients').onSnapshot(s => {
+                const unsubSet = publicRef.collection('settings').doc('global').onSnapshot(s => s.exists && setSiteSettings(p => ({...p, ...s.data()})));
+                
+                const unsubCli = publicRef.collection('clients').onSnapshot(s => {
                     const data = []; s.forEach(d => data.push({ id: d.id, ...d.data() })); setClients(data);
                 });
-                const unsubApp = db.collection('artifacts').doc(aid).collection('public').doc('data').collection('appointments').onSnapshot(s => {
-                    const data = []; s.forEach(d => data.push(d.data())); setAppointments(data);
+
+                // Global Appointment Sync for Blocking ("תפוס")
+                const unsubApp = publicRef.collection('appointments').onSnapshot(s => {
+                    const data = []; s.forEach(d => data.push({ id: d.id, ...d.data() })); setAppointments(data);
                 });
 
                 return () => { unsubSet(); unsubCli(); unsubApp(); };
-            }, [user]);
-
-            // Real-time lookup logic "Like Gemini"
-            const identifiedClient = useMemo(() => {
-                const p = formData.phone.trim();
-                return (view === 'auth' && p.length >= 9) ? clients.find(c => c.phone === p) : null;
-            }, [formData.phone, clients, view]);
-
-            useEffect(() => {
-                if (identifiedClient) setFormData(p => ({...p, firstName: identifiedClient.firstName, lastName: identifiedClient.lastName}));
-            }, [identifiedClient]);
+            }, [user, isReady, fbAppId]);
 
             const handleAuth = async (e) => {
                 e.preventDefault(); setLoading(true);
                 const phone = formData.phone.trim();
-                if (phone.toUpperCase() === 'LIN') { setProfile({ firstName: 'לין', isAdmin: true }); setView('admin'); setLoading(false); return; }
-                if (!phone || !formData.firstName || !formData.lastName) { setError('נא למלא פרטים'); setLoading(false); return; }
+                if (phone.toUpperCase() === 'LIN') { 
+                    setProfile({ firstName: 'לין', isAdmin: true, phone: 'LIN' }); 
+                    setView('admin'); 
+                    setLoading(false); 
+                    return; 
+                }
+                if (!phone || !formData.firstName || !formData.lastName) { 
+                    setError('נא למלא פרטים'); 
+                    setLoading(false); 
+                    return; 
+                }
                 
                 const data = { firstName: formData.firstName.trim(), lastName: formData.lastName.trim(), phone, updatedAt: new Date().toISOString() };
                 setProfile(data); setView('home');
                 
-                const db = firebase.firestore();
-                const aid = getAppId();
-                db.collection('artifacts').doc(aid).collection('public').doc('data').collection('clients').doc(phone).set(data, { merge: true });
+                if (user) {
+                  firebase.firestore().collection('artifacts').doc(fbAppId).collection('public').doc('data').collection('clients').doc(phone).set(data, { merge: true });
+                }
                 setLoading(false);
             };
 
             const confirmBooking = () => {
                 setStep(5);
-                const db = firebase.firestore();
-                const aid = getAppId();
-                db.collection('artifacts').doc(aid).collection('public').doc('data').collection('appointments').doc(`${Date.now()}`).set({ 
-                    ...formData, 
-                    clientPhone: profile?.phone, 
-                    clientName: `${profile?.firstName} ${profile?.lastName}`, 
-                    status: 'confirmed', 
-                    timestamp: new Date().toISOString() 
-                });
+                const booking = { ...formData, clientPhone: profile?.phone, clientName: `${profile?.firstName} ${profile?.lastName}`, status: 'confirmed', timestamp: new Date().toISOString() };
+                if (user) {
+                  firebase.firestore().collection('artifacts').doc(fbAppId).collection('public').doc('data').collection('appointments').doc(`${Date.now()}`).set(booking);
+                }
             };
 
-            const unavailableTimes = useMemo(() => appointments.filter(a => a.date === formData.date).map(a => a.time), [formData.date, appointments]);
+            const unavailableTimes = useMemo(() => {
+                if (!formData.date) return [];
+                return appointments.filter(a => a.date === formData.date).map(a => a.time);
+            }, [formData.date, appointments]);
 
-            if (!initReady) return <div className="min-h-screen bg-[#e7c3bf] flex items-center justify-center text-white font-serif text-3xl font-black italic animate-pulse">LiNAILS</div>;
+            if (!isReady) return <div className="min-h-screen bg-[#e7c3bf] flex items-center justify-center text-white font-serif font-black text-3xl italic animate-pulse">LiNAILS</div>;
 
             return (
-                <div className="min-h-screen text-right" dir="rtl">
+                <div className="min-h-screen text-right selection:bg-black selection:text-white" dir="rtl">
                     <nav className="bg-white/90 backdrop-blur-xl sticky top-0 z-50 border-b px-6 py-4 flex justify-between items-center shadow-sm">
                         {profile && (
                             <div className="flex gap-3">
-                                {profile.isAdmin && <button onClick={() => setView(view === 'admin' ? 'home' : 'admin')} className="p-2 rounded-2xl border text-[#B76E79] hover:bg-stone-50"><Icons.Settings size={20} /></button>}
-                                <button onClick={() => { setProfile(null); setView('auth'); }} className="text-stone-300 p-2"><Icons.LogOut size={20} /></button>
+                                {profile.isAdmin && <button onClick={() => setView(view === 'admin' ? 'home' : 'admin')} className="p-2 rounded-2xl border text-[#B76E79] hover:bg-stone-50 transition-all"><Icons.Settings size={20} /></button>}
+                                <button onClick={() => { setProfile(null); setView('auth'); }} className="text-stone-300 p-2 hover:text-stone-500 transition-all"><Icons.LogOut size={20} /></button>
                             </div>
                         )}
-                        <div className="flex items-center gap-3 cursor-pointer" onClick={() => profile && setView('home')}>
+                        <div className="flex items-center gap-3 cursor-pointer text-right" onClick={() => profile && setView('home')}>
                             <span className="text-2xl font-serif font-black text-stone-900 italic tracking-tighter">{siteSettings.studioName}</span>
-                            <BrandLogo className="w-10 h-10 border" />
                         </div>
                     </nav>
 
-                    <main className="max-w-xl mx-auto px-4 pt-12">
+                    <main className="max-w-xl mx-auto px-4 pt-12 text-right">
                         {view === 'auth' ? (
-                            <div className="max-w-md mx-auto bg-white p-10 rounded-[40px] shadow-2xl border border-white animate-fade-in flex flex-col items-center">
-                                <BrandLogo className="w-32 h-32 mb-6" />
-                                <h2 className="text-4xl font-serif font-black text-stone-900 italic text-center mb-4">{siteSettings.studioName}</h2>
-                                {identifiedClient && <div className="mb-6 p-4 bg-green-50 border border-green-100 rounded-2xl w-full text-center animate-fade-in"><p className="text-green-800 font-bold text-right text-center">היי {identifiedClient.firstName}! ✨</p></div>}
-                                <form onSubmit={handleAuth} className="space-y-6 w-full text-right">
-                                    <input required type="text" placeholder="מספר טלפון" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} className="w-full p-5 bg-stone-50 border border-stone-100 rounded-2xl font-bold text-center text-stone-800 focus:ring-2 focus:ring-[#B76E79] outline-none text-lg" dir="ltr" />
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <input required placeholder="שם פרטי" value={formData.firstName} onChange={e => setFormData({...formData, firstName: e.target.value})} className="p-4 bg-stone-50 border rounded-2xl font-bold text-right text-stone-800" />
-                                        <input required placeholder="שם משפחה" value={formData.lastName} onChange={e => setFormData({...formData, lastName: e.target.value})} className="p-4 bg-stone-50 border rounded-2xl font-bold text-right text-stone-800" />
-                                    </div>
-                                    <button type="submit" disabled={loading} className="w-full bg-stone-900 text-white p-5 rounded-3xl font-bold tracking-widest uppercase shadow-xl active:scale-95 transition-all flex items-center justify-center gap-3">
-                                        {loading ? <Icons.RefreshCcw className="animate-spin" /> : <Icons.LogIn />} כניסה
-                                    </button>
-                                </form>
-                            </div>
+                            <AuthView formData={formData} setFormData={setFormData} handleAuth={handleAuth} loading={loading} error={error} siteSettings={siteSettings} clientsList={clients} />
                         ) : view === 'home' ? (
                             <div className="space-y-10 animate-fade-in flex flex-col items-center text-center">
-                                <div className="bg-white p-12 rounded-[50px] shadow-2xl border space-y-8 flex flex-col items-center w-full text-center">
-                                    <BrandLogo className="w-56 h-56 p-4 shadow-xl text-center" />
-                                    <h1 className="text-5xl font-serif text-stone-800 italic text-center w-full">היי {profile?.firstName}</h1>
-                                    <div className="flex items-center justify-center gap-2 text-stone-400 text-sm italic w-full"><Icons.MapPin size={14} /> {siteSettings.address}</div>
+                                <div className="bg-white p-12 rounded-[50px] shadow-2xl border space-y-8 flex flex-col items-center w-full">
+                                    <BrandLogo />
+                                    <h1 className="text-5xl font-serif text-stone-800 italic">היי {profile?.firstName}</h1>
+                                    <div className="flex items-center justify-center gap-2 text-stone-400 text-sm italic w-full text-center text-center"><Icons.MapPin size={14} /> {siteSettings.address}</div>
                                     <button onClick={() => { setStep(1); setView('booking'); }} className="w-full bg-stone-900 text-white p-7 rounded-[35px] text-lg font-bold tracking-widest uppercase shadow-2xl flex items-center justify-center gap-4 group transition-all transform active:scale-95 text-center">קביעת תור חדש <Icons.ChevronRight size={24} /></button>
                                 </div>
-                                <AIServiceChat studioName={siteSettings.studioName} />
                             </div>
                         ) : view === 'admin' ? (
-                            <div className="space-y-6 pb-24 animate-fade-in">
-                                <AIMarketing studioName={siteSettings.studioName} />
-                                <div className="bg-white p-8 rounded-[40px] shadow-sm border space-y-4 text-right">
-                                    <h3 className="text-xl font-serif italic text-stone-800 mb-4">תורים קרובים ({appointments.length})</h3>
-                                    <button onClick={() => {
-                                        const headers = "Name,Phone,Service,Date,Time\n";
-                                        const rows = appointments.map(a => `${a.clientName},${a.clientPhone},${a.service1},${a.date},${a.time}`).join("\n");
-                                        const blob = new Blob([headers + rows], { type: 'text/csv;charset=utf-8;' });
-                                        const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = `LiNails_Appointments.csv`; link.click();
-                                    }} className="bg-green-600 text-white px-4 py-2 rounded-xl text-xs font-bold mb-4">ייצוא לאקסל</button>
-                                    {appointments.map((a, i) => (
-                                        <div key={i} className="p-4 bg-stone-50 rounded-2xl border flex justify-between items-center text-right group animate-fade-in">
-                                            <div className="text-right"><p className="font-bold">{a.clientName}</p><p className="text-xs opacity-50">{a.date} | {a.time} | {a.service1}</p></div>
-                                            <button onClick={async () => confirm('למחוק?') && firebase.firestore().collection('artifacts').doc(getAppId()).collection('public').doc('data').collection('appointments').doc(String(Date.now())).delete()}><Icons.Trash2 size={16} className="text-red-400"/></button>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
+                            <AdminDashboard siteSettings={siteSettings} clientsList={clients} appointments={appointments} db={firebase.firestore()} appId={fbAppId} />
                         ) : (
                             <div className="bg-white rounded-[50px] shadow-2xl border p-8 text-right">
-                                {step < 5 && <div className="h-1.5 bg-stone-50 text-right"><div className="bg-stone-900 h-full transition-all duration-700" style={{ width: `${(step/4)*100}%` }}></div></div>}
+                                {step < 5 && <div className="h-1.5 bg-stone-50 mb-8"><div className="bg-stone-900 h-full transition-all duration-700" style={{ width: `${(step/4)*100}%` }}></div></div>}
                                 <div className="p-8 text-right">
                                     {step === 1 && (
                                         <div className="space-y-10 flex flex-col items-center text-right w-full">
                                             <h3 className="text-3xl font-serif italic text-stone-800 text-center">באיזה תור נתפנק?</h3>
-                                            <button onClick={() => setStep(2)} className="p-8 border rounded-[35px] w-full flex justify-between items-center hover:border-[#B76E79] transition-all text-right text-right"><Icons.User /> תור רגיל <Icons.ChevronRight /></button>
-                                            <button onClick={() => { setFormData({...formData, isEmergency: true}); setStep(1.5); }} className="p-8 border-2 border-red-50 rounded-[35px] w-full flex justify-between items-center bg-red-50/20 text-red-700 text-right"><Icons.AlertCircle /> תור חירום <Icons.ChevronRight /></button>
+                                            <button onClick={() => { setFormData({...formData, isEmergency: false}); setStep(2); }} className="p-8 border rounded-[35px] w-full flex justify-between items-center hover:border-[#B76E79] transition-all text-right"><Icons.User /> תור רגיל <Icons.ChevronRight /></button>
+                                            <button onClick={() => { setFormData({...formData, isEmergency: true}); setStep(2); }} className="p-8 border-2 border-red-50 rounded-[35px] w-full flex justify-between items-center bg-red-50/20 text-red-700 text-right"><Icons.AlertCircle /> תור חירום <Icons.ChevronRight /></button>
                                         </div>
                                     )}
-                                    {step === 1.5 && <div className="space-y-6 text-right"><h3 className="text-2xl font-serif italic text-red-600 text-center text-center">פרטי חירום</h3><textarea required value={formData.emergencyReason} onChange={e => setFormData({...formData, emergencyReason: e.target.value})} className="w-full p-4 bg-stone-50 border border-red-100 rounded-2xl text-right" rows="4" placeholder="נא לפרט סיבת חירום..." /><button onClick={() => setStep(2)} className="w-full bg-red-500 text-white p-5 rounded-2xl font-bold text-center">המשך</button></div>}
-                                    {step === 2 && <div className="space-y-6 text-right"><h3 className="text-3xl font-serif italic text-center">מה עושים היום?</h3><select className="w-full p-6 bg-stone-50 border rounded-[30px] font-bold text-right text-right" onChange={e => setFormData({...formData, service1: e.target.value})}><option value="">בחרי טיפול...</option>{siteSettings.services.map(s => <option key={s.id} value={s.name}>{s.name} — ₪{s.price}</option>)}</select><button disabled={!formData.service1} onClick={() => setStep(3)} className="w-full bg-stone-900 text-white p-6 rounded-3xl font-black shadow-xl text-center">המשך</button></div>}
+                                    {step === 2 && (
+                                        <div className="space-y-6 text-right">
+                                            <h3 className="text-3xl font-serif italic text-center text-stone-800">מה עושים היום?</h3>
+                                            <select className="w-full p-6 bg-stone-50 border rounded-[30px] font-bold text-right text-stone-800" onChange={e => setFormData({...formData, service1: e.target.value})}>
+                                                <option value="">בחרי טיפול...</option>
+                                                {siteSettings.services.map(s => <option key={s.id} value={s.name}>{s.name} — ₪{s.price}</option>)}
+                                            </select>
+                                            <button disabled={!formData.service1} onClick={() => setStep(3)} className="w-full bg-stone-900 text-white p-6 rounded-3xl font-black shadow-xl text-center">המשך</button>
+                                        </div>
+                                    )}
                                     {step === 3 && (
                                         <div className="space-y-6 text-center text-right">
                                             <h3 className="text-3xl font-serif italic text-center text-right">כאן בוחרים תאריך ושעה</h3>
-                                            <input type="date" className={`w-full p-4 border rounded-2xl font-bold text-center ${siteSettings.closedDates.includes(formData.date) ? 'border-red-500 bg-red-50' : 'bg-stone-50'}`} value={formData.date} onChange={e => setFormData({...formData, date: e.target.value})} />
-                                            {siteSettings.closedDates.includes(formData.date) && <p className="text-red-500 text-center text-xs font-bold mt-2">הסטודיו סגור בתאריך זה.</p>}
+                                            <input type="date" className="w-full p-4 border rounded-2xl font-bold text-center bg-stone-50" min={new Date().toISOString().split('T')[0]} value={formData.date} onChange={e => setFormData({...formData, date: e.target.value})} />
                                             <div className="grid grid-cols-3 gap-3 pt-4 text-center">
                                                 {['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '16:00', '17:00', '18:00'].map(t => {
                                                     const isBooked = unavailableTimes.includes(t);
@@ -359,25 +320,48 @@
                                                     );
                                                 })}
                                             </div>
-                                            <button disabled={!formData.date || !formData.time || siteSettings.closedDates.includes(formData.date)} onClick={() => setStep(4)} className="w-full bg-stone-900 text-white p-6 rounded-3xl font-black mt-6 text-center shadow-lg">סיכום</button>
+                                            <button disabled={!formData.date || !formData.time} onClick={() => setStep(4)} className="w-full bg-stone-900 text-white p-6 rounded-3xl font-black mt-6 shadow-lg active:scale-95 transition-all text-center">סיכום</button>
                                         </div>
                                     )}
-                                    {step === 4 && <div className="space-y-6 text-right text-right"><h3 className="text-3xl font-serif italic text-center">אישור סופי</h3><div className="bg-stone-50 p-8 rounded-[40px] border space-y-4 shadow-inner text-right"><p className="text-right">לקוחה: <b>{profile?.firstName} {profile?.lastName}</b></p><p className="text-right">טיפול: <b>{formData.service1}</b></p><p className="text-right">מועד: <b>{formData.date} | {formData.time}</b></p></div><button onClick={confirmBooking} className="w-full bg-stone-900 text-white p-6 rounded-3xl font-black shadow-2xl text-center active:scale-95 transition-all">אישור תור סופי ✨</button></div>}
-                                    {step === 5 && <div className="text-center py-12 space-y-12 animate-bounce-in flex flex-col items-center text-center text-right"><Icons.CheckCircle size={80} className="text-green-500 text-center text-right" /><h2 className="text-4xl font-serif italic text-center text-right">התור אושר תוך שנייה!</h2><button onClick={() => window.open(`https://wa.me/972553034061?text=${encodeURIComponent('היי לין, קבעתי תור ב-' + formData.date + ' בשעה ' + formData.time)}`)} className="w-full flex items-center justify-between p-6 bg-stone-900 text-white rounded-[30px] font-bold shadow-2xl hover:bg-[#B76E79] transition-all text-right text-right"><span className="flex items-center gap-4 text-xs tracking-widest uppercase text-right text-right"><Icons.Whatsapp size={22} /> שתפי בווטצאפ</span><Icons.ChevronRight size={22} className="text-[#E5C1CD]" /></button><button onClick={() => { setView('home'); setStep(1); }} className="text-stone-500 text-xs tracking-widest uppercase font-black hover:text-black mt-4 transition-all text-center">חזרה לבית</button></div>}
+                                    {step === 4 && (
+                                        <div className="space-y-6 text-right">
+                                            <h3 className="text-3xl font-serif italic text-center">אישור סופי</h3>
+                                            <div className="bg-stone-50 p-8 rounded-[40px] border space-y-4 shadow-inner text-right text-right">
+                                                <p className="text-right">לקוחה: <b>{profile?.firstName} {profile?.lastName}</b></p>
+                                                <p className="text-right">טיפול: <b>{formData.service1}</b> {formData.isEmergency ? '(תור חירום 🚨)' : ''}</p>
+                                                <p className="text-right">מועד: <b>{formData.date} | {formData.time}</b></p>
+                                            </div>
+                                            <button onClick={confirmBooking} className="w-full bg-stone-900 text-white p-6 rounded-3xl font-black shadow-2xl text-center active:scale-95 transition-all">אישור תור סופי ✨</button>
+                                        </div>
+                                    )}
+                                    {step === 5 && (
+                                        <div className="text-center py-12 space-y-12 animate-bounce-in flex flex-col items-center">
+                                            <Icons.CheckCircle size={80} className="text-green-500 text-center" />
+                                            <h2 className="text-4xl font-serif italic">התור אושר!</h2>
+                                            <button onClick={() => {
+                                                const text = encodeURIComponent(`היי לין קבעתי תור דרך האפליקציה ל${formData.service1} ב-${formData.date} בשעה ${formData.time}`);
+                                                window.open(`https://api.whatsapp.com/send?phone=972545912382&text=${text}`);
+                                            }} className="w-full flex items-center justify-between p-6 bg-stone-900 text-white rounded-[30px] font-bold shadow-2xl hover:bg-[#B76E79] transition-all text-right text-right">
+                                                <span className="flex items-center gap-4 text-xs tracking-widest uppercase"><Icons.Whatsapp size={22} /> שתפי בווטצאפ</span>
+                                                <Icons.ChevronRight size={22} className="text-[#E5C1CD]" />
+                                            </button>
+                                            <button onClick={() => { setView('home'); setStep(1); }} className="text-stone-500 text-xs tracking-widest uppercase font-black hover:text-black mt-4 transition-all text-center">חזרה לבית</button>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
-                        )}
+                         )}
                     </main>
 
-                    <footer className="max-w-xl mx-auto mt-20 px-6 pt-10 border-t flex flex-col items-center gap-8 text-center pb-12 flex flex-col items-center text-center text-right">
-                        <div className="flex gap-10 text-stone-400 text-center text-right text-right">
-                            {siteSettings.social?.instagram?.enabled && <Icons.Instagram size={24} className="hover:text-black cursor-pointer transition-all text-center" onClick={() => window.open(siteSettings.social.instagram.url)} />}
-                            {siteSettings.social?.whatsapp?.enabled && <Icons.Whatsapp size={24} className="hover:text-black cursor-pointer transition-all text-center text-right" onClick={() => window.open(`https://wa.me/${siteSettings.social.whatsapp.url}`)} />}
+                    <footer className="max-w-xl mx-auto mt-20 px-6 pt-10 border-t flex flex-col items-center gap-8 text-center pb-12 flex flex-col items-center text-center">
+                        <div className="flex gap-10 text-stone-400">
+                            <Icons.Instagram size={24} className="hover:text-black cursor-pointer transition-all text-center" onClick={() => window.open(siteSettings.social?.instagram?.url)} />
+                            <Icons.Whatsapp size={24} className="hover:text-black cursor-pointer transition-all text-right" onClick={() => window.open(`https://wa.me/972545912382`)} />
                         </div>
-                        <div className="space-y-4 w-full flex flex-col items-center text-center text-center text-right">
-                            <p className="text-stone-600 text-[10px] font-black tracking-[0.5em] uppercase w-full text-center text-center">{siteSettings.studioName.toUpperCase()} STUDIO</p>
-                            <p className="text-stone-500 text-[8px] uppercase tracking-widest italic text-center text-right">{siteSettings.address}</p>
-                            <a href="https://wa.me/972553034061?text=%D7%94%D7%99%D7%99%20%D7%90%D7%95%D7%A8%2C%20%D7%90%D7%A0%D7%99%20%D7%9E%D7%94%D7%90%D7%A4%D7%9C%D7%99%D7%A0%D7%A6%D7%99%D7%94%20%D7%A9%D7%9C%20%D7%9C%D7%99%D7%A0%D7%90%D7%99%D7%9C%20%D7%A8%D7%A6%D7%99%D7%AA%D7%99%20%D7%9C%D7%94%D7%AA%D7%A2%D7%A0%D7%99%D7%99%D7%9F" target="_blank" className="text-stone-800 text-[11px] font-bold block mt-6 hover:text-black transition-all transform hover:scale-105 underline decoration-white w-full text-center text-right">נוצר באמצעות אור לוינסון בניית אפליקציות</a>
+                        <div className="space-y-4 w-full text-center">
+                            <p className="text-stone-600 text-[10px] font-black tracking-[0.5em] uppercase w-full text-center">{siteSettings.studioName.toUpperCase()} STUDIO</p>
+                            <p className="text-stone-500 text-[8px] uppercase tracking-widest italic text-center">{siteSettings.address}</p>
+                            <a href="https://wa.me/972553034061?text=%D7%94%D7%99%D7%99%20%D7%90%D7%95%D7%A8%2C%20%D7%90%D7%A0%D7%99%20%D7%9E%D7%94%D7%90%D7%A4%D7%9C%D7%99%D7%A0%20%D7%A6%D7%99%D7%94" target="_blank" className="text-stone-800 text-[11px] font-bold block mt-6 hover:text-black transition-all transform hover:scale-105 underline decoration-[#E5C1CD] w-full text-center">נוצר באמצעות אור לוינסון בניית אפליקציות</a>
                         </div>
                     </footer>
                 </div>
