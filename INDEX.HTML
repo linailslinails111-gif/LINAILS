@@ -14,7 +14,7 @@
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- Firebase SDKs (Compat) -->
+    <!-- Firebase SDKs (Compat - The most stable version for standalone HTML) -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -159,7 +159,7 @@
                 <div className="space-y-8 animate-fade-in pb-24 text-right" dir="rtl">
                     <div className="bg-white p-8 rounded-[40px] shadow-sm border border-stone-100">
                         <h3 className="text-xl font-serif italic text-stone-800 mb-6">הגדרות סטודיו ורשתות</h3>
-                        <div className="space-y-4 text-right">
+                        <div className="space-y-4">
                             <input placeholder="כתובת הסטודיו" className="w-full p-4 bg-stone-50 border rounded-2xl font-bold text-right" value={siteSettings?.address || ''} onChange={e => setSiteSettings({...siteSettings, address: e.target.value})} />
                             <input placeholder="לינק אינסטגרם" className="w-full p-4 bg-stone-50 border rounded-2xl font-bold text-right" value={siteSettings?.social?.instagram?.url || ''} onChange={e => setSiteSettings({...siteSettings, social: {...(siteSettings?.social || {}), instagram: {url: e.target.value}}})} />
                             <input placeholder="לינק פייסבוק" className="w-full p-4 bg-stone-50 border rounded-2xl font-bold text-right" value={siteSettings?.social?.facebook?.url || ''} onChange={e => setSiteSettings({...siteSettings, social: {...(siteSettings?.social || {}), facebook: {url: e.target.value}}})} />
@@ -170,7 +170,7 @@
 
                     <div className="bg-white p-8 rounded-[40px] shadow-sm border border-stone-100">
                         <h3 className="text-xl font-serif italic text-stone-800 mb-6 flex items-center gap-2"><Icons.Plus className="text-[#B76E79]" /> הוספת שעה פנויה</h3>
-                        <div className="grid grid-cols-2 gap-4 text-right">
+                        <div className="grid grid-cols-2 gap-4">
                             <input type="date" className="w-full p-4 bg-stone-50 border rounded-2xl font-bold text-center" value={newSlot.date} onChange={e => setNewSlot({...newSlot, date: e.target.value})} />
                             <input type="time" className="w-full p-4 bg-stone-50 border rounded-2xl font-bold text-center" value={newSlot.time} onChange={e => setNewSlot({...newSlot, time: e.target.value})} />
                         </div>
@@ -247,7 +247,7 @@
                     const fbConf = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : { apiKey: "" };
                     if (!firebase.apps.length) firebase.initializeApp(fbConf);
 
-                    // Robust Firestore settings
+                    // Robust Firestore settings for potentially blocked environments
                     const dbInstance = firebase.firestore();
                     dbInstance.settings({ experimentalForceLongPolling: true });
 
@@ -276,7 +276,10 @@
                 const aid = fbAppId;
                 const publicRef = db.collection('artifacts').doc(aid).collection('public').doc('data');
 
-                const unsubSet = publicRef.collection('settings').doc('global').onSnapshot(s => s.exists && setSiteSettings(p => ({...p, ...s.data()})));
+                // COMPAT listeners MUST use ref.onSnapshot
+                const unsubSet = publicRef.collection('settings').doc('global').onSnapshot(s => {
+                    if (s.exists) setSiteSettings(p => ({...p, ...s.data()}));
+                });
                 const unsubCli = publicRef.collection('clients').onSnapshot(s => {
                     const data = []; s.forEach(d => data.push({ id: d.id, ...d.data() })); setClients(data);
                 });
@@ -324,7 +327,7 @@
                     ...formData, clientPhone: profile?.phone, clientName: `${profile?.firstName} ${profile?.lastName}`, status: 'confirmed', timestamp: new Date().toISOString() 
                 });
 
-                // 2. DELETE slot from management (Rule: remove from system)
+                // 2. DELETE slot from system (Real-time sync)
                 await db.collection('artifacts').doc(aid).collection('public').doc('data').collection('available_slots').doc(slotId).delete();
             };
 
