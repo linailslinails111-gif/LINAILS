@@ -3,30 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    
     <title>LiNails - פורטל ניהול וקביעת תורים</title>
     
-    <!-- React & Scripts -->
+    <!-- Firebase SDKs (Compat) -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    
+    <!-- React & Babel -->
     <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- Firebase SDKs (Compat - The most stable version for standalone HTML) -->
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
-    
-    <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;600;800&family=Playfair+Display:ital,wght@0,900;1,900&display=swap" rel="stylesheet">
 
     <style>
-        body { font-family: 'Assistant', sans-serif; background: #e7c3bf; margin: 0; padding: 0; overflow-x: hidden; -webkit-tap-highlight-color: transparent; }
+        body { font-family: 'Assistant', sans-serif; background: #e7c3bf; margin: 0; padding: 0; overflow-x: hidden; }
         .font-serif { font-family: 'Playfair Display', serif; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .animate-fade-in { animation: fadeIn 0.4s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-thumb { background: #E5C1CD; border-radius: 10px; }
         select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23C292A1'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: left 0.75rem center; background-size: 1rem; }
@@ -36,116 +32,59 @@
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect, useRef, memo, useCallback, useMemo } = React;
+        const { useState, useEffect, useMemo, memo } = React;
 
         // --- 1. Icons Definition ---
         const Icons = {
-            Settings: (p) => <svg {...p} width={p.size || 24} height={p.size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.09a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>,
-            LogOut: (p) => <svg {...p} width={p.size || 24} height={p.size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>,
-            ChevronRight: (p) => <svg {...p} width={p.size || 24} height={p.size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>,
-            Trash2: (p) => <svg {...p} width={p.size || 24} height={p.size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x1="14" y1="11" y2="17"/></svg>,
-            Whatsapp: (p) => <svg {...p} width={p.size || 24} height={p.size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>,
-            CheckCircle: (p) => <svg {...p} width={p.size || 24} height={p.size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>,
-            MapPin: (p) => <svg {...p} width={p.size || 24} height={p.size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>,
-            Plus: (p) => <svg {...p} width={p.size || 24} height={p.size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>,
-            Clock: (p) => <svg {...p} width={p.size || 24} height={p.size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>,
-            Instagram: (p) => <svg {...p} width={p.size || 24} height={p.size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>,
-            Facebook: (p) => <svg {...p} width={p.size || 24} height={p.size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>,
-            RefreshCcw: (p) => <svg {...p} width={p.size || 24} height={p.size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>,
-            LogIn: (p) => <svg {...p} width={p.size || 24} height={p.size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>,
-            Download: (p) => <svg {...p} width={p.size || 24} height={p.size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>,
-            User: (p) => <svg {...p} width={p.size || 24} height={p.size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>,
-            AlertCircle: (p) => <svg {...p} width={p.size || 24} height={p.size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            Settings: (p) => <svg {...p} width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.09a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>,
+            LogOut: (p) => <svg {...p} width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>,
+            ChevronRight: (p) => <svg {...p} width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>,
+            Trash2: (p) => <svg {...p} width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x1="14" y1="11" y2="17"/></svg>,
+            Whatsapp: (p) => <svg {...p} width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>,
+            CheckCircle: (p) => <svg {...p} width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>,
+            Plus: (p) => <svg {...p} width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>,
+            Clock: (p) => <svg {...p} width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>,
+            Instagram: (p) => <svg {...p} width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>,
+            RefreshCcw: (p) => <svg {...p} width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>,
+            LogIn: (p) => <svg {...p} width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>,
+            Download: (p) => <svg {...p} width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>,
+            User: (p) => <svg {...p} width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>,
+            Facebook: (p) => <svg {...p} width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
         };
 
         const BrandLogo = () => (
             <div className="w-32 h-32 bg-white rounded-full flex items-center justify-center p-2 shadow-xl border border-white relative overflow-hidden">
                 <svg viewBox="0 0 200 200" className="w-full h-full">
-                    <defs>
-                        <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stopColor="#D4AF37" />
-                            <stop offset="100%" stopColor="#F9E29C" />
-                        </linearGradient>
-                    </defs>
                     <path d="M70 130 Q70 170 100 170 Q130 170 130 130 L130 90 L70 90 Z" fill="#B76E79" />
                     <rect x="90" y="30" width="20" height="60" rx="4" fill="#1a1a1a" />
-                    <path d="M150 40 L154 50 L164 50 L156 57 L159 67 L150 60 L141 67 L144 57 L136 50 L146 50 Z" fill="url(#goldGrad)" className="animate-pulse" />
                     <text x="100" y="192" fontFamily="Playfair Display" fontSize="34" fontWeight="900" textAnchor="middle" fill="#1a1a1a">LiNails</text>
                 </svg>
             </div>
         );
 
-        // --- 2. Sub-Components (Defined BEFORE App) ---
+        // --- 2. Sub-Components ---
 
-        const AuthView = memo(({ formData, setFormData, handleAuth, loading, error, clientsList, siteSettings }) => {
-            const identifiedClient = useMemo(() => {
-                const p = formData.phone.trim();
-                return p.length >= 9 ? (clientsList || []).find(c => c.phone === p) : null;
-            }, [formData.phone, clientsList]);
-
-            useEffect(() => {
-                if (identifiedClient) {
-                    setFormData(prev => ({...prev, firstName: identifiedClient.firstName, lastName: identifiedClient.lastName}));
-                }
-            }, [identifiedClient, setFormData]);
-
-            return (
-                <div className="max-w-md mx-auto bg-white p-10 rounded-[40px] shadow-2xl border border-white animate-fade-in flex flex-col items-center">
-                    <BrandLogo />
-                    <h2 className="text-4xl font-serif font-black text-stone-900 italic text-center mb-8 mt-6">LiNAILS</h2>
-                    {identifiedClient && (
-                        <div className="mb-6 p-4 bg-green-50 border border-green-100 rounded-2xl w-full text-center animate-fade-in">
-                            <p className="text-green-800 font-bold">היי {identifiedClient.firstName}! ✨</p>
-                        </div>
-                    )}
-                    <form onSubmit={handleAuth} className="space-y-6 w-full text-right">
-                        <input required type="text" placeholder="מספר טלפון" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} className="w-full p-5 bg-stone-50 border border-stone-100 rounded-2xl font-bold text-center text-stone-800 focus:ring-2 focus:ring-[#B76E79] outline-none text-lg" dir="ltr" />
-                        <div className="grid grid-cols-2 gap-4">
-                            <input required placeholder="שם פרטי" value={formData.firstName} onChange={e => setFormData({...formData, firstName: e.target.value})} className="p-4 bg-stone-50 border rounded-2xl font-bold text-stone-800 text-right focus:ring-2 focus:ring-[#B76E79] outline-none" />
-                            <input required placeholder="שם משפחה" value={formData.lastName} onChange={e => setFormData({...formData, lastName: e.target.value})} className="p-4 bg-stone-50 border rounded-2xl font-bold text-stone-800 text-right focus:ring-2 focus:ring-[#B76E79] outline-none" />
-                        </div>
-                        {error && <p className="text-red-400 text-xs text-center font-bold bg-red-50 p-3 rounded-xl border border-red-100">{error}</p>}
-                        <button type="submit" disabled={loading} className="w-full bg-stone-900 text-white p-5 rounded-3xl font-bold tracking-widest uppercase shadow-xl hover:bg-stone-800 active:scale-95 transition-all flex items-center justify-center gap-3">
-                            {loading ? <Icons.RefreshCcw className="animate-spin" /> : <Icons.LogIn />} כניסה
-                        </button>
-                    </form>
-                </div>
-            );
-        });
-
-        const AdminDashboard = memo(({ siteSettings, setSiteSettings, appointments, clientsList, db, appId, availableSlots }) => {
+        const AdminDashboard = ({ siteSettings, setSiteSettings, appointments, clientsList, db, appId, availableSlots }) => {
             const [newSlot, setNewSlot] = useState({ date: '', time: '' });
+            const dataRef = db.collection('artifacts').doc(appId).collection('public').doc('data');
 
             const addSlot = async () => {
                 if (!newSlot.date || !newSlot.time) return;
-                const slotId = `${newSlot.date}_${newSlot.time.replace(':', '')}`;
+                const id = `${newSlot.date}_${newSlot.time.replace(':', '')}`;
                 try {
-                    await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('available_slots').doc(slotId).set({
-                        date: newSlot.date,
-                        time: newSlot.time,
-                        createdAt: new Date().toISOString()
-                    });
-                    alert('שעה נוספה בהצלחה!');
-                } catch (e) {
-                    alert('שגיאה בהוספת שעה.');
-                }
+                    await dataRef.collection('available_slots').doc(id).set(newSlot);
+                    setNewSlot({ date: '', time: '' });
+                } catch (e) { console.error("Error adding slot", e); }
             };
 
-            const deleteSlot = async (id) => {
-                try {
-                    await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('available_slots').doc(id).delete();
-                } catch (e) {
-                    alert('שגיאה במחיקת שעה.');
-                }
-            };
-
+            const deleteSlot = (id) => dataRef.collection('available_slots').doc(id).delete();
+            const deleteAppt = (id) => dataRef.collection('appointments').doc(id).delete();
+            
             const saveSettings = async () => {
                 try {
-                    await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('settings').doc('global').set(siteSettings, { merge: true });
+                    await dataRef.collection('settings').doc('global').set(siteSettings, { merge: true });
                     alert('הגדרות נשמרו!');
-                } catch (e) {
-                    alert('שגיאה בשמירת הגדרות.');
-                }
+                } catch (e) { console.error("Error saving settings", e); }
             };
 
             const exportCSV = () => {
@@ -157,297 +96,282 @@
 
             return (
                 <div className="space-y-8 animate-fade-in pb-24 text-right" dir="rtl">
-                    <div className="bg-white p-8 rounded-[40px] shadow-sm border border-stone-100">
-                        <h3 className="text-xl font-serif italic text-stone-800 mb-6">הגדרות סטודיו ורשתות</h3>
-                        <div className="space-y-4">
-                            <input placeholder="כתובת הסטודיו" className="w-full p-4 bg-stone-50 border rounded-2xl font-bold text-right" value={siteSettings?.address || ''} onChange={e => setSiteSettings({...siteSettings, address: e.target.value})} />
-                            <input placeholder="לינק אינסטגרם" className="w-full p-4 bg-stone-50 border rounded-2xl font-bold text-right" value={siteSettings?.social?.instagram?.url || ''} onChange={e => setSiteSettings({...siteSettings, social: {...(siteSettings?.social || {}), instagram: {url: e.target.value}}})} />
-                            <input placeholder="לינק פייסבוק" className="w-full p-4 bg-stone-50 border rounded-2xl font-bold text-right" value={siteSettings?.social?.facebook?.url || ''} onChange={e => setSiteSettings({...siteSettings, social: {...(siteSettings?.social || {}), facebook: {url: e.target.value}}})} />
-                            <input placeholder="מספר וואטסאפ (97254...)" className="w-full p-4 bg-stone-50 border rounded-2xl font-bold text-right" value={siteSettings?.whatsapp_url || ''} onChange={e => setSiteSettings({...siteSettings, whatsapp_url: e.target.value})} />
-                            <button onClick={saveSettings} className="w-full bg-stone-900 text-white p-4 rounded-3xl font-black shadow-lg">שמירת הגדרות</button>
+                    <div className="bg-white p-6 rounded-[30px] border shadow-sm">
+                        <h3 className="text-xl font-bold mb-4">הגדרות סטודיו</h3>
+                        <div className="space-y-3">
+                            <input className="w-full p-4 bg-stone-50 border rounded-xl" placeholder="כתובת" value={siteSettings.address || ''} onChange={e => setSiteSettings({...siteSettings, address: e.target.value})} />
+                            <input className="w-full p-4 bg-stone-50 border rounded-xl" placeholder="אינסטגרם (קישור מלא)" value={siteSettings.social?.instagram?.url || ''} onChange={e => setSiteSettings({...siteSettings, social: {instagram: {url: e.target.value}}})} />
+                            <input className="w-full p-4 bg-stone-50 border rounded-xl" placeholder="וואטסאפ (מספר בלבד למשל 97254...)" value={siteSettings.whatsapp_url || ''} onChange={e => setSiteSettings({...siteSettings, whatsapp_url: e.target.value})} />
+                            <button onClick={saveSettings} className="w-full bg-stone-900 text-white p-4 rounded-xl font-bold shadow-lg">שמור הגדרות</button>
                         </div>
                     </div>
 
-                    <div className="bg-white p-8 rounded-[40px] shadow-sm border border-stone-100">
-                        <h3 className="text-xl font-serif italic text-stone-800 mb-6 flex items-center gap-2"><Icons.Plus className="text-[#B76E79]" /> הוספת שעה פנויה</h3>
-                        <div className="grid grid-cols-2 gap-4">
-                            <input type="date" className="w-full p-4 bg-stone-50 border rounded-2xl font-bold text-center" value={newSlot.date} onChange={e => setNewSlot({...newSlot, date: e.target.value})} />
-                            <input type="time" className="w-full p-4 bg-stone-50 border rounded-2xl font-bold text-center" value={newSlot.time} onChange={e => setNewSlot({...newSlot, time: e.target.value})} />
+                    <div className="bg-white p-6 rounded-[30px] border shadow-sm">
+                        <h3 className="text-xl font-bold mb-4 flex items-center gap-2"><Icons.Plus /> הוספת שעות פנויות</h3>
+                        <div className="grid grid-cols-2 gap-2">
+                            <input type="date" className="p-4 bg-stone-50 border rounded-xl font-bold" value={newSlot.date} onChange={e => setNewSlot({...newSlot, date: e.target.value})} />
+                            <input type="time" className="p-4 bg-stone-50 border rounded-xl font-bold" value={newSlot.time} onChange={e => setNewSlot({...newSlot, time: e.target.value})} />
                         </div>
-                        <button onClick={addSlot} className="w-full bg-[#B76E79] text-white p-4 rounded-3xl font-black mt-6 shadow-lg">הוספה ליומן</button>
+                        <button onClick={addSlot} className="w-full bg-stone-900 text-white p-4 rounded-xl font-bold mt-4 shadow-lg">הוסף ליומן</button>
                     </div>
 
-                    <div className="bg-white p-8 rounded-[40px] shadow-sm border border-stone-100">
-                        <h3 className="text-xl font-serif italic text-stone-800 mb-6 flex items-center gap-2"><Icons.Clock className="text-[#B76E79]" /> שעות פנויות כרגע ({(availableSlots || []).length})</h3>
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                            {(availableSlots || []).sort((a,b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time)).map(slot => (
-                                <div key={slot.id} className="p-4 bg-stone-50 rounded-2xl border flex justify-between items-center group">
-                                    <div className="text-right">
-                                        <p className="font-bold text-sm">{slot.date}</p>
-                                        <p className="text-[#B76E79] font-black">{slot.time}</p>
-                                    </div>
-                                    <button onClick={() => deleteSlot(slot.id)} className="text-stone-300 hover:text-red-500 transition-colors">
-                                        <Icons.Trash2 size={16} />
-                                    </button>
+                    <div className="bg-white p-6 rounded-[30px] border shadow-sm">
+                        <h3 className="text-xl font-bold mb-4">שעות פנויות ({(availableSlots || []).length})</h3>
+                        <div className="grid grid-cols-2 gap-2">
+                            {availableSlots.sort((a,b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time)).map(s => (
+                                <div key={s.id} className="p-3 bg-stone-50 rounded-xl flex justify-between items-center border">
+                                    <span className="text-sm font-bold">{s.date} | {s.time}</span>
+                                    <button onClick={() => deleteSlot(s.id)} className="text-red-400"><Icons.Trash2 size={16} /></button>
                                 </div>
                             ))}
                         </div>
-                        {(!availableSlots || availableSlots.length === 0) && <p className="text-stone-400 text-center italic py-4">אין שעות פנויות כרגע.</p>}
                     </div>
 
-                    <div className="bg-white p-8 rounded-[40px] shadow-sm border space-y-6 text-right">
-                        <div className="flex justify-between items-center border-b pb-4">
-                            <h3 className="text-xl font-serif italic text-stone-800">תורים שנקבעו ({(appointments || []).length})</h3>
-                            <button onClick={exportCSV} className="bg-green-600 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-md flex items-center gap-2"><Icons.Download size={14} /> ייצוא</button>
+                    <div className="bg-white p-6 rounded-[30px] border shadow-sm">
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="text-xl font-bold">תורים שנקבעו ({(appointments || []).length})</h3>
+                            <button onClick={exportCSV} className="text-xs font-bold text-green-600 flex items-center gap-1 border border-green-200 px-2 py-1 rounded-lg bg-green-50"><Icons.Download size={14} /> ייצוא</button>
                         </div>
-                        <div className="space-y-4">
-                            {(appointments || []).map((a) => (
-                                <div key={a.id} className="p-5 bg-stone-50 rounded-3xl border relative animate-fade-in text-right">
-                                    <p className="font-bold text-lg text-stone-800">{a.clientName} <span className="text-xs opacity-40 font-normal">({a.clientPhone})</span></p>
-                                    <p className="text-[#B76E79] font-black text-sm mb-2">{a.date} | {a.time}</p>
-                                    <div className="p-3 bg-white rounded-xl text-xs border border-stone-100 text-right">טיפול: {a.service1}</div>
-                                    <button onClick={async () => confirm('למחוק?') && db.collection('artifacts').doc(appId).collection('public').doc('data').collection('appointments').doc(a.id).delete()} className="absolute top-4 left-4 p-2 text-stone-300 hover:text-red-500"><Icons.Trash2 size={16}/></button>
+                        <div className="space-y-3">
+                            {appointments.map(a => (
+                                <div key={a.id} className="p-4 bg-stone-50 rounded-xl border relative">
+                                    <p className="font-bold">{a.clientName}</p>
+                                    <p className="text-xs text-[#B76E79] font-bold">{a.date} | {a.time} | {a.service1}</p>
+                                    <button onClick={() => deleteAppt(a.id)} className="absolute top-4 left-4 text-stone-300 hover:text-red-500"><Icons.Trash2 size={16} /></button>
                                 </div>
                             ))}
                         </div>
                     </div>
                 </div>
             );
-        });
+        };
 
-        // --- 3. Main Application ---
+        // --- 3. Main App ---
 
         const App = () => {
-            const [user, setUser] = useState(null);
             const [isReady, setIsReady] = useState(false);
+            const [user, setUser] = useState(null);
             const [view, setView] = useState('auth');
             const [profile, setProfile] = useState(null);
-            const [loading, setLoading] = useState(false);
-            const [error, setError] = useState(null);
-            
-            const [clients, setClients] = useState([]);
-            const [appointments, setAppointments] = useState([]);
             const [availableSlots, setAvailableSlots] = useState([]);
-            
-            const [siteSettings, setSiteSettings] = useState({ 
-                studioName: 'LiNails', address: 'נחליאלי 21, כפר סבא',
-                services: [{ id: '1', name: 'מניקור ג׳ל', price: 120 }, { id: '2', name: 'בנייה בציפורן', price: 250 }],
-                social: { instagram: { url: 'https://www.instagram.com/linails111' }, facebook: { url: '' } },
-                whatsapp_url: '972545912382'
-            });
-
-            const [formData, setFormData] = useState({ firstName: '', lastName: '', phone: '', service1: '', date: '', time: '', isEmergency: false });
+            const [appointments, setAppointments] = useState([]);
+            const [clients, setClients] = useState([]);
+            const [siteSettings, setSiteSettings] = useState({ studioName: 'LiNails', address: 'נחליאלי 21, כפר סבא', social: { instagram: { url: '' } }, services: [{ id: '1', name: 'מניקור ג׳ל', price: 120 }, { id: '2', name: 'בנייה בציפורן', price: 250 }], whatsapp_url: '972545912382' });
+            const [formData, setFormData] = useState({ firstName: '', lastName: '', phone: '', service1: '', date: '', time: '' });
             const [step, setStep] = useState(1);
 
-            const fbAppId = typeof __app_id !== 'undefined' ? __app_id : 'linails-portal-production';
+            // Configuration for Rule 1
+            const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : { apiKey: "" };
+            const appId = typeof __app_id !== 'undefined' ? __app_id : 'linails-portal-production';
 
-            // --- Initialization ---
             useEffect(() => {
-                const init = async () => {
-                    const fbConf = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : { apiKey: "" };
-                    if (!firebase.apps.length) firebase.initializeApp(fbConf);
+                const initAuth = async () => {
+                    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+                    const authRef = firebase.auth();
+                    const dbRef = firebase.firestore();
+                    dbRef.settings({ experimentalForceLongPolling: true });
 
-                    // Robust Firestore settings for potentially blocked environments
-                    const dbInstance = firebase.firestore();
-                    dbInstance.settings({ experimentalForceLongPolling: true });
-
-                    const auth = firebase.auth();
                     try {
                         const token = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-                        if (token) await auth.signInWithCustomToken(token);
-                        else await auth.signInAnonymously();
-
-                        auth.onAuthStateChanged(u => {
+                        if (token) await authRef.signInWithCustomToken(token);
+                        else await authRef.signInAnonymously();
+                        
+                        authRef.onAuthStateChanged(u => {
                             setUser(u);
                             setIsReady(true);
                         });
-                    } catch (e) { 
+                    } catch (e) {
+                        console.error("Auth initialization failed", e);
                         setIsReady(true);
                     }
                 };
-                init();
+                initAuth();
             }, []);
 
-            // --- Real-time Data Listeners (Compat Style) ---
             useEffect(() => {
                 if (!user || !isReady) return;
                 
-                const db = firebase.firestore();
-                const aid = fbAppId;
-                const publicRef = db.collection('artifacts').doc(aid).collection('public').doc('data');
+                const dbRef = firebase.firestore();
+                const publicDataRef = dbRef.collection('artifacts').doc(appId).collection('public').doc('data');
 
-                // COMPAT listeners MUST use ref.onSnapshot
-                const unsubSet = publicRef.collection('settings').doc('global').onSnapshot(s => {
-                    if (s.exists) setSiteSettings(p => ({...p, ...s.data()}));
-                });
-                const unsubCli = publicRef.collection('clients').onSnapshot(s => {
-                    const data = []; s.forEach(d => data.push({ id: d.id, ...d.data() })); setClients(data);
-                });
-                const unsubApp = publicRef.collection('appointments').onSnapshot(s => {
-                    const data = []; s.forEach(d => data.push({ id: d.id, ...d.data() })); setAppointments(data);
-                });
-                const unsubSlots = publicRef.collection('available_slots').onSnapshot(s => {
-                    const data = []; s.forEach(d => data.push({ id: d.id, ...d.data() })); setAvailableSlots(data);
-                });
+                // snapshot handlers with error callbacks to prevent silent failure
+                const unsubSettings = publicDataRef.collection('settings').doc('global').onSnapshot(
+                    s => s.exists && setSiteSettings(prev => ({...prev, ...s.data()})),
+                    err => console.warn("Waiting for settings permissions...")
+                );
+                
+                const unsubSlots = publicDataRef.collection('available_slots').onSnapshot(
+                    s => {
+                        const slots = [];
+                        s.forEach(doc => slots.push({ id: doc.id, ...doc.data() }));
+                        setAvailableSlots(slots);
+                    },
+                    err => console.warn("Waiting for slots permissions...")
+                );
 
-                return () => { unsubSet(); unsubCli(); unsubApp(); unsubSlots(); };
-            }, [user, isReady, fbAppId]);
+                const unsubAppts = publicDataRef.collection('appointments').onSnapshot(
+                    s => {
+                        const appts = [];
+                        s.forEach(doc => appts.push({ id: doc.id, ...doc.data() }));
+                        setAppointments(appts);
+                    },
+                    err => console.warn("Waiting for appointments permissions...")
+                );
+
+                const unsubClients = publicDataRef.collection('clients').onSnapshot(
+                    s => {
+                        const clis = [];
+                        s.forEach(doc => clis.push({ id: doc.id, ...doc.data() }));
+                        setClients(clis);
+                    },
+                    err => console.warn("Waiting for clients permissions...")
+                );
+
+                return () => { unsubSettings(); unsubSlots(); unsubAppts(); unsubClients(); };
+            }, [user, isReady]);
 
             const handleAuth = async (e) => {
-                e.preventDefault(); setLoading(true);
-                const phone = formData.phone.trim();
-                if (phone.toUpperCase() === 'LIN') { 
-                    setProfile({ firstName: 'לין', isAdmin: true, phone: 'LIN' }); 
-                    setView('admin'); 
-                    setLoading(false); 
-                    return; 
+                e.preventDefault();
+                if (formData.phone.toUpperCase() === 'LIN') {
+                    setProfile({ firstName: 'לין', isAdmin: true });
+                    setView('admin');
+                } else {
+                    const data = { ...formData, updatedAt: new Date().toISOString() };
+                    setProfile(data);
+                    setView('home');
+                    // Store client record
+                    const dbRef = firebase.firestore();
+                    await dbRef.collection('artifacts').doc(appId).collection('public').doc('data').collection('clients').doc(formData.phone).set(data, { merge: true });
                 }
-                if (!phone || !formData.firstName || !formData.lastName) { 
-                    setError('נא למלא פרטים'); 
-                    setLoading(false); 
-                    return; 
-                }
-                
-                const data = { firstName: formData.firstName.trim(), lastName: formData.lastName.trim(), phone, updatedAt: new Date().toISOString() };
-                setProfile(data); setView('home');
-                if (user) {
-                    firebase.firestore().collection('artifacts').doc(fbAppId).collection('public').doc('data').collection('clients').doc(phone).set(data, { merge: true });
-                }
-                setLoading(false);
-            };
-
-            const confirmBooking = async () => {
-                setStep(5);
-                const db = firebase.firestore();
-                const aid = fbAppId;
-                const slotId = `${formData.date}_${formData.time.replace(':', '')}`;
-                
-                // 1. Create Appointment
-                await db.collection('artifacts').doc(aid).collection('public').doc('data').collection('appointments').doc(`${Date.now()}`).set({ 
-                    ...formData, clientPhone: profile?.phone, clientName: `${profile?.firstName} ${profile?.lastName}`, status: 'confirmed', timestamp: new Date().toISOString() 
-                });
-
-                // 2. DELETE slot from system (Real-time sync)
-                await db.collection('artifacts').doc(aid).collection('public').doc('data').collection('available_slots').doc(slotId).delete();
             };
 
             const currentAvailableHours = useMemo(() => {
-                if (!formData.date) return [];
-                return (availableSlots || []).filter(s => s.date === formData.date).map(s => s.time).sort();
+                return availableSlots.filter(s => s.date === formData.date).map(s => s.time).sort();
             }, [formData.date, availableSlots]);
 
-            if (!isReady) return (
-                <div className="min-h-screen bg-stone-900 flex flex-col items-center justify-center text-white font-serif italic p-10 text-center">
-                    <h1 className="text-4xl animate-pulse">LiNAILS</h1>
-                    <p className="text-[#D4AF37] text-xs tracking-widest mt-4 uppercase">Portal Loading...</p>
-                </div>
-            );
+            const confirmBooking = async () => {
+                setStep(5);
+                const id = `${Date.now()}`;
+                const slotId = `${formData.date}_${formData.time.replace(':', '')}`;
+                const dbRef = firebase.firestore();
+                const publicDataRef = dbRef.collection('artifacts').doc(appId).collection('public').doc('data');
+                
+                await publicDataRef.collection('appointments').doc(id).set({
+                    ...formData,
+                    clientName: `${profile.firstName} ${profile.lastName}`,
+                    clientPhone: profile.phone,
+                    timestamp: new Date().toISOString()
+                });
+                await publicDataRef.collection('available_slots').doc(slotId).delete();
+            };
+
+            // Fast client identification
+            useEffect(() => {
+                if (view === 'auth' && formData.phone.length >= 9) {
+                    const existing = clients.find(c => c.phone === formData.phone);
+                    if (existing) setFormData(p => ({...p, firstName: existing.firstName, lastName: existing.lastName}));
+                }
+            }, [formData.phone, clients, view]);
+
+            if (!isReady) return <div className="min-h-screen bg-stone-900 flex items-center justify-center text-white font-bold animate-pulse">LiNAILS</div>;
 
             return (
                 <div className="min-h-screen text-right selection:bg-black selection:text-white" dir="rtl">
-                    <nav className="bg-white/90 backdrop-blur-xl sticky top-0 z-50 border-b px-6 py-4 flex justify-between items-center shadow-sm">
+                    <nav className="bg-white/90 backdrop-blur-md sticky top-0 z-50 border-b px-6 py-4 flex justify-between items-center shadow-sm">
                         {profile && (
-                            <div className="flex gap-3">
-                                {profile.isAdmin && <button onClick={() => setView(view === 'admin' ? 'home' : 'admin')} className="p-2 rounded-2xl border text-[#B76E79] hover:bg-stone-50 transition-all"><Icons.Settings size={20} /></button>}
-                                <button onClick={() => { setProfile(null); setView('auth'); }} className="text-stone-300 p-2 hover:text-stone-500 transition-all"><Icons.LogOut size={20} /></button>
+                            <div className="flex gap-2">
+                                {profile.isAdmin && <button onClick={() => setView(view === 'admin' ? 'home' : 'admin')} className="p-2 border rounded-xl hover:bg-stone-50"><Icons.Settings size={18} /></button>}
+                                <button onClick={() => window.location.reload()} className="p-2 border rounded-xl text-stone-300 hover:text-stone-500"><Icons.LogOut size={18} /></button>
                             </div>
                         )}
-                        <div className="flex items-center gap-3 cursor-pointer text-right" onClick={() => profile && setView('home')}>
-                            <span className="text-2xl font-serif font-black text-stone-900 italic tracking-tighter">{siteSettings.studioName}</span>
-                        </div>
+                        <span className="text-xl font-black italic">{siteSettings.studioName}</span>
                     </nav>
 
-                    <main className="max-w-xl mx-auto px-4 pt-12 text-right">
+                    <main className="max-w-xl mx-auto px-4 pt-10">
                         {view === 'auth' ? (
-                            <AuthView formData={formData} setFormData={setFormData} handleAuth={handleAuth} loading={loading} error={error} siteSettings={siteSettings} clientsList={clients} />
+                            <div className="bg-white p-8 rounded-[40px] shadow-2xl flex flex-col items-center">
+                                <BrandLogo />
+                                <h2 className="text-3xl font-black mt-4 mb-8">LiNAILS</h2>
+                                <form onSubmit={handleAuth} className="w-full space-y-4">
+                                    <input required placeholder="מספר טלפון" className="w-full p-5 bg-stone-50 border rounded-2xl font-bold text-center" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} />
+                                    <div className="flex gap-2">
+                                        <input required placeholder="שם פרטי" className="flex-1 p-4 bg-stone-50 border rounded-2xl font-bold text-right" value={formData.firstName} onChange={e => setFormData({...formData, firstName: e.target.value})} />
+                                        <input required placeholder="שם משפחה" className="flex-1 p-4 bg-stone-50 border rounded-2xl font-bold text-right" value={formData.lastName} onChange={e => setFormData({...formData, lastName: e.target.value})} />
+                                    </div>
+                                    <button className="w-full bg-stone-900 text-white p-5 rounded-3xl font-bold shadow-lg hover:bg-stone-800 transition-colors">כניסה</button>
+                                </form>
+                            </div>
                         ) : view === 'home' ? (
-                            <div className="space-y-10 animate-fade-in flex flex-col items-center text-center">
-                                <div className="bg-white p-12 rounded-[50px] shadow-2xl border space-y-8 flex flex-col items-center w-full text-center">
-                                    <BrandLogo />
-                                    <h1 className="text-5xl font-serif text-stone-800 italic text-center w-full">היי {profile?.firstName}</h1>
-                                    <div className="flex items-center justify-center gap-2 text-stone-400 text-sm italic w-full text-center text-center"><Icons.MapPin size={14} /> {siteSettings.address}</div>
-                                    <button onClick={() => { setStep(1); setView('booking'); }} className="w-full bg-stone-900 text-white p-7 rounded-[35px] text-lg font-bold uppercase shadow-2xl transition-all active:scale-95 text-center">קביעת תור חדש <Icons.ChevronRight size={24} /></button>
-                                </div>
+                            <div className="bg-white p-10 rounded-[50px] shadow-2xl flex flex-col items-center text-center space-y-6">
+                                <BrandLogo />
+                                <h1 className="text-4xl font-black">היי {profile?.firstName}</h1>
+                                <div className="text-stone-400 flex items-center gap-1 text-sm"><Icons.MapPin size={14} /> {siteSettings.address}</div>
+                                <button onClick={() => {setStep(1); setView('booking')}} className="w-full bg-stone-900 text-white p-6 rounded-[30px] font-bold shadow-xl flex items-center justify-center gap-2 hover:bg-stone-800 transform active:scale-95 transition-all">קביעת תור חדש <Icons.ChevronRight /></button>
                             </div>
                         ) : view === 'admin' ? (
-                            <AdminDashboard siteSettings={siteSettings} setSiteSettings={setSiteSettings} appointments={appointments} clientsList={clients} db={firebase.firestore()} appId={fbAppId} availableSlots={availableSlots} />
+                            <AdminDashboard siteSettings={siteSettings} setSiteSettings={setSiteSettings} appointments={appointments} availableSlots={availableSlots} db={firebase.firestore()} appId={appId} />
                         ) : (
-                            <div className="bg-white rounded-[50px] shadow-2xl border p-8 text-right">
-                                {step < 5 && <div className="h-1.5 bg-stone-50 mb-8"><div className="bg-stone-900 h-full transition-all duration-700" style={{ width: `${(step/4)*100}%` }}></div></div>}
-                                <div className="p-8 text-right">
-                                    {step === 1 && (
-                                        <div className="space-y-10 flex flex-col items-center text-right w-full">
-                                            <h3 className="text-3xl font-serif italic text-stone-800 text-center">באיזה תור נתפנק?</h3>
-                                            <button onClick={() => { setFormData({...formData, isEmergency: false}); setStep(2); }} className="p-8 border rounded-[35px] w-full flex justify-between items-center hover:border-[#B76E79] text-right">תור רגיל <Icons.ChevronRight /></button>
-                                            <button onClick={() => { setFormData({...formData, isEmergency: true}); setStep(2); }} className="p-8 border-2 border-red-50 bg-red-50/20 rounded-[35px] w-full flex justify-between items-center text-red-700 text-right"><Icons.AlertCircle /> תור חירום <Icons.ChevronRight /></button>
+                            <div className="bg-white rounded-[40px] shadow-xl p-6">
+                                {step < 5 && <div className="h-1.5 bg-stone-100 mb-6 rounded-full overflow-hidden"><div className="h-full bg-stone-900 transition-all duration-700" style={{width: `${(step/4)*100}%`}}></div></div>}
+                                {step === 1 && (
+                                    <div className="space-y-4">
+                                        <h3 className="text-2xl font-bold text-center">איזה תור נתפנק?</h3>
+                                        <button onClick={() => setStep(2)} className="w-full p-6 border rounded-3xl flex justify-between items-center font-bold hover:border-[#B76E79] transition-all">תור רגיל <Icons.ChevronRight /></button>
+                                        <button onClick={() => setStep(2)} className="w-full p-6 border-2 border-red-50 bg-red-50/20 text-red-700 rounded-3xl flex justify-between items-center font-bold hover:border-red-200 transition-all">תור חירום <Icons.ChevronRight /></button>
+                                    </div>
+                                )}
+                                {step === 2 && (
+                                    <div className="space-y-4">
+                                        <h3 className="text-2xl font-bold text-center">מה עושים היום?</h3>
+                                        <select className="w-full p-5 bg-stone-50 border rounded-2xl font-bold text-right" onChange={e => setFormData({...formData, service1: e.target.value})}>
+                                            <option value="">בחרי טיפול...</option>
+                                            {siteSettings.services.map(s => <option key={s.id} value={s.name}>{s.name} — ₪{s.price}</option>)}
+                                        </select>
+                                        <button disabled={!formData.service1} onClick={() => setStep(3)} className="w-full bg-stone-900 text-white p-5 rounded-2xl font-bold shadow-lg disabled:opacity-30">המשך</button>
+                                    </div>
+                                )}
+                                {step === 3 && (
+                                    <div className="space-y-4">
+                                        <h3 className="text-2xl font-bold text-center">בחירת זמן</h3>
+                                        <input type="date" className="w-full p-4 bg-stone-50 border rounded-2xl font-bold text-center" min={new Date().toISOString().split('T')[0]} onChange={e => setFormData({...formData, date: e.target.value})} />
+                                        <div className="grid grid-cols-3 gap-2">
+                                            {currentAvailableHours.map(t => (
+                                                <button key={t} onClick={() => setFormData({...formData, time: t})} className={`p-4 rounded-xl border-2 font-bold transition-all ${formData.time === t ? 'bg-stone-900 border-stone-900 text-white shadow-md' : 'bg-white text-stone-400 hover:border-stone-200'}`}>{t}</button>
+                                            ))}
                                         </div>
-                                    )}
-                                    {step === 2 && (
-                                        <div className="space-y-6 text-right">
-                                            <h3 className="text-3xl font-serif italic text-center text-stone-800">מה עושים היום?</h3>
-                                            <select className="w-full p-6 bg-stone-50 border rounded-[30px] font-bold text-right text-stone-800" onChange={e => setFormData({...formData, service1: e.target.value})}>
-                                                <option value="">בחרי טיפול...</option>
-                                                {siteSettings.services.map(s => <option key={s.id} value={s.name}>{s.name} — ₪{s.price}</option>)}
-                                            </select>
-                                            <button disabled={!formData.service1} onClick={() => setStep(3)} className="w-full bg-stone-900 text-white p-6 rounded-3xl font-black shadow-xl text-center">המשך</button>
+                                        {formData.date && currentAvailableHours.length === 0 && <p className="text-red-400 text-center text-sm font-bold py-2 animate-fade-in">אין שעות פנויות לתאריך זה.</p>}
+                                        <button disabled={!formData.date || !formData.time} onClick={() => setStep(4)} className="w-full bg-stone-900 text-white p-5 rounded-2xl font-bold shadow-lg disabled:opacity-30">סיכום</button>
+                                    </div>
+                                )}
+                                {step === 4 && (
+                                    <div className="space-y-4">
+                                        <h3 className="text-2xl font-bold text-center">אישור סופי</h3>
+                                        <div className="bg-stone-50 p-6 rounded-3xl space-y-2 border text-right">
+                                            <p>לקוחה: <b>{profile?.firstName} {profile?.lastName}</b></p>
+                                            <p>טיפול: <b>{formData.service1}</b></p>
+                                            <p>מועד: <b>{formData.date} | {formData.time}</b></p>
                                         </div>
-                                    )}
-                                    {step === 3 && (
-                                        <div className="space-y-6 text-center text-right">
-                                            <h3 className="text-3xl font-serif italic text-center text-right">כאן בוחרים תאריך ושעה</h3>
-                                            <input type="date" className="w-full p-4 border rounded-2xl font-bold text-center bg-stone-50" min={new Date().toISOString().split('T')[0]} value={formData.date} onChange={e => setFormData({...formData, date: e.target.value})} />
-                                            <div className="grid grid-cols-3 gap-3 pt-4 text-center">
-                                                {currentAvailableHours.map(t => (
-                                                    <button key={t} onClick={() => setFormData({...formData, time: t})} className={`p-4 rounded-2xl font-bold text-xs border-2 transition-all ${formData.time === t ? 'bg-stone-900 border-stone-900 text-white shadow-lg' : 'bg-white text-stone-400'}`}>
-                                                        {t}
-                                                    </button>
-                                                ))}
-                                            </div>
-                                            {formData.date && currentAvailableHours.length === 0 && <p className="text-red-400 text-xs italic py-4">אין שעות פנויות להזמנה בתאריך זה.</p>}
-                                            <button disabled={!formData.date || !formData.time} onClick={() => setStep(4)} className="w-full bg-stone-900 text-white p-6 rounded-3xl font-black mt-6 shadow-lg active:scale-95 transition-all text-center">סיכום</button>
-                                        </div>
-                                    )}
-                                    {step === 4 && (
-                                        <div className="space-y-6 text-right">
-                                            <h3 className="text-3xl font-serif italic text-center">אישור סופי</h3>
-                                            <div className="bg-stone-50 p-8 rounded-[40px] border space-y-4 shadow-inner text-right text-right">
-                                                <p className="text-right">לקוחה: <b>{profile?.firstName} {profile?.lastName}</b></p>
-                                                <p className="text-right">טיפול: <b>{formData.service1}</b> {formData.isEmergency ? '(תור חירום 🚨)' : ''}</p>
-                                                <p className="text-right">מועד: <b>{formData.date} | {formData.time}</b></p>
-                                            </div>
-                                            <button onClick={confirmBooking} className="w-full bg-stone-900 text-white p-6 rounded-3xl font-black shadow-2xl text-center active:scale-95 transition-all">אישור תור סופי ✨</button>
-                                        </div>
-                                    )}
-                                    {step === 5 && (
-                                        <div className="text-center py-12 space-y-12 animate-bounce-in flex flex-col items-center">
-                                            <Icons.CheckCircle size={80} className="text-green-500 text-center" />
-                                            <h2 className="text-4xl font-serif italic text-center">התור אושר!</h2>
-                                            <button onClick={() => {
-                                                const text = encodeURIComponent(`היי לין קבעתי תור ל${formData.service1} ב-${formData.date} בשעה ${formData.time}`);
-                                                window.open(`https://api.whatsapp.com/send?phone=${siteSettings.whatsapp_url}&text=${text}`);
-                                            }} className="w-full flex items-center justify-between p-6 bg-stone-900 text-white rounded-[30px] font-bold shadow-2xl hover:bg-[#B76E79] transition-all text-right text-right">
-                                                <span className="flex items-center gap-4 text-xs tracking-widest uppercase text-right"><Icons.Whatsapp size={22} /> שתפי בווטצאפ</span>
-                                                <Icons.ChevronRight size={22} className="text-[#E5C1CD]" />
-                                            </button>
-                                            <button onClick={() => { setView('home'); setStep(1); }} className="text-stone-500 text-xs tracking-widest uppercase font-black hover:text-black mt-4 transition-all text-center">חזרה לבית</button>
-                                        </div>
-                                    )}
-                                </div>
+                                        <button onClick={confirmBooking} className="w-full bg-stone-900 text-white p-6 rounded-3xl font-bold shadow-xl hover:bg-stone-800 transform active:scale-95 transition-all">אישור תור סופי ✨</button>
+                                    </div>
+                                )}
+                                {step === 5 && (
+                                    <div className="text-center py-8 space-y-6 animate-fade-in">
+                                        <Icons.CheckCircle size={64} className="mx-auto text-green-500" />
+                                        <h2 className="text-3xl font-black">התור אושר!</h2>
+                                        <button onClick={() => window.open(`https://api.whatsapp.com/send?phone=${siteSettings.whatsapp_url}&text=${encodeURIComponent(`היי לין קבעתי תור ל${formData.service1} ב-${formData.date} בשעה ${formData.time}`)}`)} className="w-full bg-stone-900 text-white p-5 rounded-[25px] font-bold shadow-xl flex items-center justify-center gap-2 hover:bg-[#25D366] transition-colors"><Icons.Whatsapp /> שתפי בווטצאפ</button>
+                                        <button onClick={() => { setView('home'); setStep(1); setFormData({ firstName: '', lastName: '', phone: '', service1: '', date: '', time: '' }); }} className="text-stone-400 font-bold text-sm hover:text-stone-600">חזרה לבית</button>
+                                    </div>
+                                )}
                             </div>
-                         )}
+                        )}
                     </main>
 
-                    <footer className="max-w-xl mx-auto mt-20 px-6 pt-10 border-t flex flex-col items-center gap-8 text-center pb-12">
-                        <div className="flex gap-10 text-stone-400">
-                            {siteSettings.social?.instagram?.url && <Icons.Instagram size={24} className="hover:text-black cursor-pointer transition-all text-center" onClick={() => window.open(siteSettings.social.instagram.url)} />}
-                            {siteSettings.social?.facebook?.url && <Icons.Facebook size={24} className="hover:text-black cursor-pointer transition-all text-center" onClick={() => window.open(siteSettings.social.facebook.url)} />}
-                            <Icons.Whatsapp size={24} className="hover:text-black cursor-pointer transition-all text-right" onClick={() => window.open(`https://wa.me/${siteSettings.whatsapp_url}`)} />
+                    <footer className="max-w-xl mx-auto mt-20 px-6 pt-10 border-t flex flex-col items-center gap-4 text-center pb-12">
+                        <div className="flex gap-6 text-stone-400">
+                            {siteSettings.social?.instagram?.url && <Icons.Instagram onClick={() => window.open(siteSettings.social.instagram.url)} className="cursor-pointer hover:text-stone-900 transition-colors" />}
+                            <Icons.Whatsapp onClick={() => window.open(`https://wa.me/${siteSettings.whatsapp_url}`)} className="cursor-pointer hover:text-stone-900 transition-colors" />
                         </div>
-                        <div className="space-y-4 w-full text-center text-center">
-                            <p className="text-stone-600 text-[10px] font-black tracking-[0.5em] uppercase w-full text-center">{(siteSettings.studioName || 'LiNAILS').toUpperCase()} STUDIO</p>
-                            <p className="text-stone-500 text-[8px] uppercase tracking-widest italic text-center">{siteSettings.address}</p>
-                            <a href="https://wa.me/972553034061?text=%D7%94%D7%99%D7%99%20%D7%90%D7%95%D7%A8%2C%20%D7%90%D7%A0%D7%99%20%D7%9E%D7%94%D7%90%D7%A4%D7%9C%D7%99%D7%A0%20%D7%A6%D7%99%D7%94" target="_blank" className="text-stone-800 text-[11px] font-bold block mt-6 hover:text-black transition-all transform hover:scale-105 underline decoration-[#E5C1CD] w-full text-center text-center">נוצר באמצעות אור לוינסון בניית אפליקציות</a>
-                        </div>
+                        <p className="text-stone-300 text-[10px] font-bold">נוצר באמצעות אור לוינסון בניית אפליקציות</p>
                     </footer>
                 </div>
             );
